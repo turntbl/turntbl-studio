@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Turntbl Studio - Music Video Editor</title>
+  <link rel="stylesheet" href="css/studio.css">
+</head>
+<body>
+  <div id="loading" class="loading-screen">
+    <div class="spinner"></div>
+    <p>Verifying your artist account...</p>
+  </div>
+
+  <div id="error" class="error-screen" style="display: none;">
+    <h2>Oops!</h2>
+    <p id="error-message"></p>
+    <button onclick="window.location.href='https://getturntbl.com/login'">
+      Back to Turntbl
+    </button>
+  </div>
+
+  <script type="module">
+    import { supabase } from './js/config.js';
+
+    async function validateAuth() {
+      // Get token from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      const artistId = urlParams.get('artist_id');
+      const returnUrl = urlParams.get('return') || 'https://getturntbl.com/studio';
+
+      if (!token || !artistId) {
+        showError('Missing authentication. Please try again from Turntbl.');
+        return;
+      }
+
+      // Validate token with Supabase
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+
+      if (error || !user) {
+        showError('Invalid session. Please log in again.');
+        return;
+      }
+
+      // Store session info in sessionStorage
+      sessionStorage.setItem('turntbl_token', token);
+      sessionStorage.setItem('turntbl_artist_id', artistId);
+      sessionStorage.setItem('turntbl_return_url', returnUrl);
+      sessionStorage.setItem('turntbl_user_id', user.id);
+
+      // Redirect to editor
+      window.location.href = '/editor.html';
+    }
+
+    function showError(message) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error').style.display = 'flex';
+      document.getElementById('error-message').textContent = message;
+    }
+
+    // Run on page load
+    validateAuth();
+  </script>
+</body>
+</html>
