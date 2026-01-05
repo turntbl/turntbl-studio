@@ -1,0 +1,385 @@
+/* css/editor.css */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: #0f0f1e;
+  color: white;
+  overflow-x: hidden;
+}
+
+/* Header */
+.editor-header {
+  background: #1a1a2e;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #30B3B8;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #30B3B8, #E91E8C);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Sections */
+.editor-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.editor-section {
+  display: none;
+}
+
+.editor-section.active {
+  display: block;
+}
+
+.editor-section h2 {
+  font-size: 32px;
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+/* Upload Grid */
+.upload-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.upload-box {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 24px;
+  border: 2px dashed #30B3B8;
+  transition: all 0.3s;
+}
+
+.upload-box:hover {
+  border-color: #E91E8C;
+  transform: translateY(-4px);
+}
+
+.upload-label {
+  display: block;
+  text-align: center;
+  cursor: pointer;
+}
+
+.upload-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+.upload-hint {
+  font-size: 14px;
+  color: #888;
+  margin-top: 8px;
+}
+
+.file-preview {
+  text-align: center;
+}
+
+.file-preview video,
+.file-preview audio {
+  width: 100%;
+  margin-bottom: 12px;
+  border-radius: 8px;
+}
+
+.file-preview img {
+  width: 100%;
+  max-width: 300px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+/* Form */
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  background: #1a1a2e;
+  border: 2px solid #30B3B8;
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #E91E8C;
+}
+
+/* Editor Workspace */
+.edit-workspace {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+@media (max-width: 1024px) {
+  .edit-workspace {
+    grid-template-columns: 1fr;
+  }
+}
+
+.video-preview-container {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.canvas-container {
+  position: relative;
+  width: 100%;
+  background: black;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+#preview-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.text-overlay-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: all;
+}
+
+.text-overlay-item {
+  pointer-events: all;
+}
+
+.video-controls {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#video-scrubber {
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  appearance: none;
+  background: #333;
+  outline: none;
+}
+
+#video-scrubber::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #30B3B8;
+  cursor: pointer;
+}
+
+/* Editing Tools */
+.editing-tools {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 24px;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.tool-section {
+  margin-bottom: 32px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid #333;
+}
+
+.tool-section:last-child {
+  border-bottom: none;
+}
+
+.tool-section h3 {
+  margin-bottom: 16px;
+  color: #30B3B8;
+}
+
+.trim-controls,
+.text-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.text-style-grid {
+  display: grid;
+  grid-template-columns: 60px 1fr 80px;
+  gap: 8px;
+}
+
+#text-input {
+  width: 100%;
+  padding: 12px;
+  background: #0f0f1e;
+  border: 2px solid #30B3B8;
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+}
+
+.text-list {
+  margin-top: 16px;
+}
+
+.text-list-item {
+  background: #0f0f1e;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.text-list-item button {
+  background: #E91E8C;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* Buttons */
+.button-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-tool {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #E91E8C, #30B3B8);
+  color: white;
+  flex: 1;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(233, 30, 140, 0.3);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background: #333;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: #444;
+}
+
+.btn-tool {
+  background: #30B3B8;
+  color: white;
+  width: 100%;
+}
+
+.btn-tool:hover {
+  background: #289ca1;
+}
+
+.btn-large {
+  font-size: 18px;
+  padding: 16px 48px;
+}
+
+/* Publishing Status */
+.publishing-status {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.spinner-large {
+  width: 80px;
+  height: 80px;
+  border: 6px solid rgba(48, 179, 184, 0.3);
+  border-top-color: #30B3B8;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 32px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.progress-bar {
+  width: 100%;
+  max-width: 600px;
+  height: 8px;
+  background: #333;
+  border-radius: 4px;
+  margin: 32px auto 0;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #30B3B8, #E91E8C);
+  width: 0%;
+  transition: width 0.3s;
+  animation: progress 2s ease-in-out infinite;
+}
+
+@keyframes progress {
+  0% { width: 0%; }
+  50% { width: 70%; }
+  100% { width: 100%; }
+}
