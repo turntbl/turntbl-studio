@@ -1033,3 +1033,724 @@ function handleCancel() {
     window.location.href = editorState.returnUrl;
   }
 }
+
+// ============================================
+// VIDEO THUMBNAIL GENERATION
+// ============================================
+
+async function generateVideoThumbnails(videoElement, count = 10) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const thumbnails = [];
+  
+  canvas.width = 60;
+  canvas.height = 80;
+  
+  const duration = videoElement.duration;
+  const interval = duration / count;
+  
+  for (let i = 0; i < count; i++) {
+    videoElement.currentTime = i * interval;
+    
+    await new Promise(resolve => {
+      videoElement.onseeked = () => {
+        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        thumbnails.push(canvas.toDataURL('image/jpeg', 0.7));
+        resolve();
+      };
+    });
+  }
+  
+  videoElement.currentTime = 0;
+  return thumbnails;
+}
+
+function renderVideoThumbnails(thumbnails) {
+  const container = document.getElementById('video-thumbnails');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  
+  thumbnails.forEach((thumbnail, index) => {
+    const img = document.createElement('img');
+    img.src = thumbnail;
+    img.className = 'timeline-thumbnail';
+    img.alt = `Frame ${index + 1}`;
+    container.appendChild(img);
+  });
+}
+
+// ============================================
+// TRIM TIMELINE WITH DRAGGABLE HANDLES
+// ============================================
+
+function initializeTrimTimeline() {
+  const video = editorState.videoElement;
+  if (!video) return;
+  
+  const container = document.querySelector('.video-timeline-container');
+  const selection = document.getElementById('trim-selection');
+  const leftHandle = document.getElementById('trim-handle-left');
+  const rightHandle = document.getElementById('trim-handle-right');
+  
+  if (!container || !selection || !leftHandle || !rightHandle) return;
+  
+  const duration = video.duration;
+  editorState.trimEnd = Math.min(duration, 30);
+  
+  // Update display
+  updateTrimDisplay();
+  
+  // Make handles draggable
+  makeTrimHandleDraggable(leftHandle, 'left', container, video, duration);
+  makeTrimHandleDraggable(rightHandle, 'right', container, video, duration);
+}
+
+function makeTrimHandleDraggable(handle, side, container, video, duration) {
+  let isDragging = false;
+  let startX = 0;
+  
+  const onStart = (e) => {
+    isDragging = true;
+    startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+    handle.classList.add('dragging');
+    e.preventDefault();
+  };
+  
+  const onMove = (e) => {
+    if (!isDragging) return;
+    
+    const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+    const deltaX = clientX - startX;
+    
+    const containerRect = container.getBoundingClientRect();
+    const deltaPercent = (deltaX / containerRect.width) * 100;
+    const deltaTime = (deltaPercent / 100) * duration;
+    
+    if (side === 'left') {
+      let newStart = editorState.trimStart + deltaTime;
+      newStart = Math.max(0, Math.min(newStart, editorState.trimEnd - 1));
+      editorState.trimStart = newStart;
+      video.currentTime = newStart;
+    } else {
+      let newEnd = editorState.trimEnd + deltaTime;
+      newEnd = Math.min(duration, Math.max(newEnd, editorState.trimStart + 1));
+      
+      // Enforce 30 second max
+      if (newEnd - editorState.trimStart > 30) {
+        newEnd = editorState.trimStart + 30;
+      }
+      
+      editorState.trimEnd = newEnd;
+      video.currentTime = newEnd;
+    }
+    
+    updateTrimDisplay();
+    startX = clientX;
+  };
+  
+  const onEnd = () => {
+    if (isDragging) {
+      isDragging = false;
+      handle.classList.remove('dragging');
+      // Resume video playback
+      video.currentTime = editorState.trimStart;
+      video.play();
+    }
+  };
+  
+  // Mouse events
+  handle.addEventListener('mousedown', onStart);
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onEnd);
+  
+  // Touch events
+  handle.addEventListener('touchstart', onStart);
+  document.addEventListener('touchmove', onMove);
+  document.addEventListener('touchend', onEnd);
+}
+
+function updateTrimDisplay() {
+  const selection = document.getElementById('trim-selection');
+  const duration = editorState.videoElement?.duration || 30;
+  
+  if (selection) {
+    const startPercent = (editorState.trimStart / duration) * 100;
+    const endPercent = (editorState.trimEnd / duration) * 100;
+    
+    selection.style.left = startPercent + '%';
+    selection.style.width = (endPercent - startPercent) + '%';
+  }
+  
+  // Update time displays
+  const trimDuration = document.getElementById('trim-duration');
+  const timelineStart = document.getElementById('timeline-start');
+  const timelineEnd = document.getElementById('timeline-end');
+  
+  if (trimDuration) {
+    const selected = editorState.trimEnd - editorState.trimStart;
+    trimDuration.textContent = formatTime(selected);
+  }
+  
+  if (timelineStart) timelineStart.textContent = formatTime(editorState.trimStart);
+  if (timelineEnd) timelineEnd.textContent = formatTime(editorState.trimEnd);
+}
+
+// ============================================
+// MUSIC INTEGRATION
+// ============================================
+
+function updateMusicCard(song) {
+  const musicIcon = document.getElementById('music-icon');
+  const musicInfo = document.getElementById('music-info');
+  
+  if (!musicIcon || !musicInfo) return;
+  
+  if (song) {
+    // Show cover art
+    musicIcon.innerHTML = `<img src="${song.cover_art_url}" alt="${song.title}">`;
+    musicInfo.innerHTML = `
+      <p class="music-title">${song.title}</p>
+      <p class="music-artist">${song.artist_name || 'Artist'}</p>
+    `;
+    
+    // Show song timeline
+    initializeSongTimeline(song);
+  } else {
+    // Reset to default
+    musicIcon.innerHTML = '🎵';
+    musicInfo.innerHTML = `
+      <p class="music-title">Add Sound</p>
+      <p class="music-artist">Choose from your songs</p>
+    `;
+    
+    // Hide song timeline
+    const songTimelineSection = document.getElementById('song-timeline-section');
+    if (songTimelineSection) songTimelineSection.style.display = 'none';
+  }
+}
+
+async function initializeSongTimeline(song) {
+  const songTimelineSection = document.getElementById('song-timeline-section');
+  if (!songTimelineSection) return;
+  
+  songTimelineSection.style.display = 'block';
+  
+  // Load audio
+  const previewAudio = document.getElementById('preview-audio');
+  if (previewAudio) {
+    previewAudio.src = song.audio_file_url;
+    await previewAudio.load();
+    
+    editorState.audioElement = previewAudio;
+    editorState.selectedSongDuration = previewAudio.duration;
+    
+    // Initialize song timeline with buffer
+    const videoDuration = editorState.trimEnd - editorState.trimStart;
+    const buffer = 2; // 2 seconds on each side
+    
+    editorState.songTrimStart = 0;
+    editorState.songTrimEnd = Math.min(videoDuration, previewAudio.duration);
+    editorState.songTimelineMax = Math.min(previewAudio.duration, videoDuration + (buffer * 2));
+    
+    renderSongWaveform();
+    initializeSongTrimHandles();
+    
+    // Sync audio with video
+    syncAudioWithVideo();
+  }
+}
+
+function renderSongWaveform() {
+  const waveform = document.getElementById('song-waveform');
+  if (!waveform) return;
+  
+  // For now, render a simple visual representation
+  // In Phase 2, we can generate actual waveform from audio
+  waveform.innerHTML = '';
+  
+  for (let i = 0; i < 50; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'waveform-bar';
+    bar.style.height = (Math.random() * 60 + 40) + '%';
+    waveform.appendChild(bar);
+  }
+}
+
+function initializeSongTrimHandles() {
+  const container = document.querySelector('.song-timeline-container');
+  const selection = document.getElementById('song-selection');
+  const leftHandle = document.getElementById('song-handle-left');
+  const rightHandle = document.getElementById('song-handle-right');
+  
+  if (!container || !selection || !leftHandle || !rightHandle) return;
+  
+  updateSongTrimDisplay();
+  
+  makeSongHandleDraggable(leftHandle, 'left', container);
+  makeSongHandleDraggable(rightHandle, 'right', container);
+}
+
+function makeSongHandleDraggable(handle, side, container) {
+  let isDragging = false;
+  let startX = 0;
+  
+  const onStart = (e) => {
+    isDragging = true;
+    startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+    handle.classList.add('dragging');
+    e.preventDefault();
+  };
+  
+  const onMove = (e) => {
+    if (!isDragging) return;
+    
+    const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+    const deltaX = clientX - startX;
+    
+    const containerRect = container.getBoundingClientRect();
+    const deltaPercent = (deltaX / containerRect.width) * 100;
+    const deltaTime = (deltaPercent / 100) * editorState.songTimelineMax;
+    
+    const videoDuration = editorState.trimEnd - editorState.trimStart;
+    
+    if (side === 'left') {
+      let newStart = editorState.songTrimStart + deltaTime;
+      newStart = Math.max(0, Math.min(newStart, editorState.songTrimEnd - 1));
+      editorState.songTrimStart = newStart;
+    } else {
+      let newEnd = editorState.songTrimEnd + deltaTime;
+      const maxEnd = Math.min(editorState.selectedSongDuration, editorState.songTrimStart + videoDuration);
+      newEnd = Math.min(maxEnd, Math.max(newEnd, editorState.songTrimStart + 1));
+      editorState.songTrimEnd = newEnd;
+    }
+    
+    updateSongTrimDisplay();
+    syncAudioWithVideo();
+    startX = clientX;
+  };
+  
+  const onEnd = () => {
+    if (isDragging) {
+      isDragging = false;
+      handle.classList.remove('dragging');
+    }
+  };
+  
+  handle.addEventListener('mousedown', onStart);
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onEnd);
+  
+  handle.addEventListener('touchstart', onStart);
+  document.addEventListener('touchmove', onMove);
+  document.addEventListener('touchend', onEnd);
+}
+
+function updateSongTrimDisplay() {
+  const selection = document.getElementById('song-selection');
+  
+  if (selection) {
+    const startPercent = (editorState.songTrimStart / editorState.songTimelineMax) * 100;
+    const endPercent = (editorState.songTrimEnd / editorState.songTimelineMax) * 100;
+    
+    selection.style.left = startPercent + '%';
+    selection.style.width = (endPercent - startPercent) + '%';
+  }
+  
+  const startTime = document.getElementById('song-start-time');
+  const duration = document.getElementById('song-duration');
+  const endTime = document.getElementById('song-end-time');
+  
+  if (startTime) startTime.textContent = formatTime(editorState.songTrimStart);
+  if (endTime) endTime.textContent = formatTime(editorState.songTimelineMax);
+  if (duration) {
+    const selected = editorState.songTrimEnd - editorState.songTrimStart;
+    duration.textContent = formatTime(selected) + ' selected';
+  }
+}
+
+function syncAudioWithVideo() {
+  const video = editorState.videoElement;
+  const audio = editorState.audioElement;
+  
+  if (!video || !audio) return;
+  
+  // Unmute audio for preview
+  audio.muted = false;
+  
+  // When video plays, play audio from selected start point
+  video.addEventListener('play', () => {
+    audio.currentTime = editorState.songTrimStart;
+    audio.play();
+  });
+  
+  video.addEventListener('pause', () => {
+    audio.pause();
+  });
+  
+  video.addEventListener('seeking', () => {
+    const videoProgress = (video.currentTime - editorState.trimStart) / (editorState.trimEnd - editorState.trimStart);
+    const audioDuration = editorState.songTrimEnd - editorState.songTrimStart;
+    audio.currentTime = editorState.songTrimStart + (videoProgress * audioDuration);
+  });
+}
+// ============================================
+// VIDEO THUMBNAIL GENERATION
+// ============================================
+
+async function generateVideoThumbnails(videoElement, count = 10) {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const thumbnails = [];
+  
+  canvas.width = 60;
+  canvas.height = 80;
+  
+  const duration = videoElement.duration;
+  const interval = duration / count;
+  
+  for (let i = 0; i < count; i++) {
+    videoElement.currentTime = i * interval;
+    
+    await new Promise(resolve => {
+      videoElement.onseeked = () => {
+        ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+        thumbnails.push(canvas.toDataURL('image/jpeg', 0.7));
+        resolve();
+      };
+    });
+  }
+  
+  videoElement.currentTime = 0;
+  return thumbnails;
+}
+
+function renderVideoThumbnails(thumbnails) {
+  const container = document.getElementById('video-thumbnails');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  
+  thumbnails.forEach((thumbnail, index) => {
+    const img = document.createElement('img');
+    img.src = thumbnail;
+    img.className = 'timeline-thumbnail';
+    img.alt = `Frame ${index + 1}`;
+    container.appendChild(img);
+  });
+}
+
+// ============================================
+// TRIM TIMELINE WITH DRAGGABLE HANDLES
+// ============================================
+
+function initializeTrimTimeline() {
+  const video = editorState.videoElement;
+  if (!video) return;
+  
+  const container = document.querySelector('.video-timeline-container');
+  const selection = document.getElementById('trim-selection');
+  const leftHandle = document.getElementById('trim-handle-left');
+  const rightHandle = document.getElementById('trim-handle-right');
+  
+  if (!container || !selection || !leftHandle || !rightHandle) return;
+  
+  const duration = video.duration;
+  editorState.trimEnd = Math.min(duration, 30);
+  
+  // Update display
+  updateTrimDisplay();
+  
+  // Make handles draggable
+  makeTrimHandleDraggable(leftHandle, 'left', container, video, duration);
+  makeTrimHandleDraggable(rightHandle, 'right', container, video, duration);
+}
+
+function makeTrimHandleDraggable(handle, side, container, video, duration) {
+  let isDragging = false;
+  let startX = 0;
+  
+  const onStart = (e) => {
+    isDragging = true;
+    startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+    handle.classList.add('dragging');
+    e.preventDefault();
+  };
+  
+  const onMove = (e) => {
+    if (!isDragging) return;
+    
+    const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+    const deltaX = clientX - startX;
+    
+    const containerRect = container.getBoundingClientRect();
+    const deltaPercent = (deltaX / containerRect.width) * 100;
+    const deltaTime = (deltaPercent / 100) * duration;
+    
+    if (side === 'left') {
+      let newStart = editorState.trimStart + deltaTime;
+      newStart = Math.max(0, Math.min(newStart, editorState.trimEnd - 1));
+      editorState.trimStart = newStart;
+      video.currentTime = newStart;
+    } else {
+      let newEnd = editorState.trimEnd + deltaTime;
+      newEnd = Math.min(duration, Math.max(newEnd, editorState.trimStart + 1));
+      
+      // Enforce 30 second max
+      if (newEnd - editorState.trimStart > 30) {
+        newEnd = editorState.trimStart + 30;
+      }
+      
+      editorState.trimEnd = newEnd;
+      video.currentTime = newEnd;
+    }
+    
+    updateTrimDisplay();
+    startX = clientX;
+  };
+  
+  const onEnd = () => {
+    if (isDragging) {
+      isDragging = false;
+      handle.classList.remove('dragging');
+      // Resume video playback
+      video.currentTime = editorState.trimStart;
+      video.play();
+    }
+  };
+  
+  // Mouse events
+  handle.addEventListener('mousedown', onStart);
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onEnd);
+  
+  // Touch events
+  handle.addEventListener('touchstart', onStart);
+  document.addEventListener('touchmove', onMove);
+  document.addEventListener('touchend', onEnd);
+}
+
+function updateTrimDisplay() {
+  const selection = document.getElementById('trim-selection');
+  const duration = editorState.videoElement?.duration || 30;
+  
+  if (selection) {
+    const startPercent = (editorState.trimStart / duration) * 100;
+    const endPercent = (editorState.trimEnd / duration) * 100;
+    
+    selection.style.left = startPercent + '%';
+    selection.style.width = (endPercent - startPercent) + '%';
+  }
+  
+  // Update time displays
+  const trimDuration = document.getElementById('trim-duration');
+  const timelineStart = document.getElementById('timeline-start');
+  const timelineEnd = document.getElementById('timeline-end');
+  
+  if (trimDuration) {
+    const selected = editorState.trimEnd - editorState.trimStart;
+    trimDuration.textContent = formatTime(selected);
+  }
+  
+  if (timelineStart) timelineStart.textContent = formatTime(editorState.trimStart);
+  if (timelineEnd) timelineEnd.textContent = formatTime(editorState.trimEnd);
+}
+
+// ============================================
+// MUSIC INTEGRATION
+// ============================================
+
+function updateMusicCard(song) {
+  const musicIcon = document.getElementById('music-icon');
+  const musicInfo = document.getElementById('music-info');
+  
+  if (!musicIcon || !musicInfo) return;
+  
+  if (song) {
+    // Show cover art
+    musicIcon.innerHTML = `<img src="${song.cover_art_url}" alt="${song.title}">`;
+    musicInfo.innerHTML = `
+      <p class="music-title">${song.title}</p>
+      <p class="music-artist">${song.artist_name || 'Artist'}</p>
+    `;
+    
+    // Show song timeline
+    initializeSongTimeline(song);
+  } else {
+    // Reset to default
+    musicIcon.innerHTML = '🎵';
+    musicInfo.innerHTML = `
+      <p class="music-title">Add Sound</p>
+      <p class="music-artist">Choose from your songs</p>
+    `;
+    
+    // Hide song timeline
+    const songTimelineSection = document.getElementById('song-timeline-section');
+    if (songTimelineSection) songTimelineSection.style.display = 'none';
+  }
+}
+
+async function initializeSongTimeline(song) {
+  const songTimelineSection = document.getElementById('song-timeline-section');
+  if (!songTimelineSection) return;
+  
+  songTimelineSection.style.display = 'block';
+  
+  // Load audio
+  const previewAudio = document.getElementById('preview-audio');
+  if (previewAudio) {
+    previewAudio.src = song.audio_file_url;
+    await previewAudio.load();
+    
+    editorState.audioElement = previewAudio;
+    editorState.selectedSongDuration = previewAudio.duration;
+    
+    // Initialize song timeline with buffer
+    const videoDuration = editorState.trimEnd - editorState.trimStart;
+    const buffer = 2; // 2 seconds on each side
+    
+    editorState.songTrimStart = 0;
+    editorState.songTrimEnd = Math.min(videoDuration, previewAudio.duration);
+    editorState.songTimelineMax = Math.min(previewAudio.duration, videoDuration + (buffer * 2));
+    
+    renderSongWaveform();
+    initializeSongTrimHandles();
+    
+    // Sync audio with video
+    syncAudioWithVideo();
+  }
+}
+
+function renderSongWaveform() {
+  const waveform = document.getElementById('song-waveform');
+  if (!waveform) return;
+  
+  // For now, render a simple visual representation
+  // In Phase 2, we can generate actual waveform from audio
+  waveform.innerHTML = '';
+  
+  for (let i = 0; i < 50; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'waveform-bar';
+    bar.style.height = (Math.random() * 60 + 40) + '%';
+    waveform.appendChild(bar);
+  }
+}
+
+function initializeSongTrimHandles() {
+  const container = document.querySelector('.song-timeline-container');
+  const selection = document.getElementById('song-selection');
+  const leftHandle = document.getElementById('song-handle-left');
+  const rightHandle = document.getElementById('song-handle-right');
+  
+  if (!container || !selection || !leftHandle || !rightHandle) return;
+  
+  updateSongTrimDisplay();
+  
+  makeSongHandleDraggable(leftHandle, 'left', container);
+  makeSongHandleDraggable(rightHandle, 'right', container);
+}
+
+function makeSongHandleDraggable(handle, side, container) {
+  let isDragging = false;
+  let startX = 0;
+  
+  const onStart = (e) => {
+    isDragging = true;
+    startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+    handle.classList.add('dragging');
+    e.preventDefault();
+  };
+  
+  const onMove = (e) => {
+    if (!isDragging) return;
+    
+    const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+    const deltaX = clientX - startX;
+    
+    const containerRect = container.getBoundingClientRect();
+    const deltaPercent = (deltaX / containerRect.width) * 100;
+    const deltaTime = (deltaPercent / 100) * editorState.songTimelineMax;
+    
+    const videoDuration = editorState.trimEnd - editorState.trimStart;
+    
+    if (side === 'left') {
+      let newStart = editorState.songTrimStart + deltaTime;
+      newStart = Math.max(0, Math.min(newStart, editorState.songTrimEnd - 1));
+      editorState.songTrimStart = newStart;
+    } else {
+      let newEnd = editorState.songTrimEnd + deltaTime;
+      const maxEnd = Math.min(editorState.selectedSongDuration, editorState.songTrimStart + videoDuration);
+      newEnd = Math.min(maxEnd, Math.max(newEnd, editorState.songTrimStart + 1));
+      editorState.songTrimEnd = newEnd;
+    }
+    
+    updateSongTrimDisplay();
+    syncAudioWithVideo();
+    startX = clientX;
+  };
+  
+  const onEnd = () => {
+    if (isDragging) {
+      isDragging = false;
+      handle.classList.remove('dragging');
+    }
+  };
+  
+  handle.addEventListener('mousedown', onStart);
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onEnd);
+  
+  handle.addEventListener('touchstart', onStart);
+  document.addEventListener('touchmove', onMove);
+  document.addEventListener('touchend', onEnd);
+}
+
+function updateSongTrimDisplay() {
+  const selection = document.getElementById('song-selection');
+  
+  if (selection) {
+    const startPercent = (editorState.songTrimStart / editorState.songTimelineMax) * 100;
+    const endPercent = (editorState.songTrimEnd / editorState.songTimelineMax) * 100;
+    
+    selection.style.left = startPercent + '%';
+    selection.style.width = (endPercent - startPercent) + '%';
+  }
+  
+  const startTime = document.getElementById('song-start-time');
+  const duration = document.getElementById('song-duration');
+  const endTime = document.getElementById('song-end-time');
+  
+  if (startTime) startTime.textContent = formatTime(editorState.songTrimStart);
+  if (endTime) endTime.textContent = formatTime(editorState.songTimelineMax);
+  if (duration) {
+    const selected = editorState.songTrimEnd - editorState.songTrimStart;
+    duration.textContent = formatTime(selected) + ' selected';
+  }
+}
+
+function syncAudioWithVideo() {
+  const video = editorState.videoElement;
+  const audio = editorState.audioElement;
+  
+  if (!video || !audio) return;
+  
+  // Unmute audio for preview
+  audio.muted = false;
+  
+  // When video plays, play audio from selected start point
+  video.addEventListener('play', () => {
+    audio.currentTime = editorState.songTrimStart;
+    audio.play();
+  });
+  
+  video.addEventListener('pause', () => {
+    audio.pause();
+  });
+  
+  video.addEventListener('seeking', () => {
+    const videoProgress = (video.currentTime - editorState.trimStart) / (editorState.trimEnd - editorState.trimStart);
+    const audioDuration = editorState.songTrimEnd - editorState.songTrimStart;
+    audio.currentTime = editorState.songTrimStart + (videoProgress * audioDuration);
+  });
+}
