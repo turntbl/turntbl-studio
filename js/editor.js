@@ -254,8 +254,8 @@ async function startCountdown() {
   await wait(1000);
   numberElement.classList.remove('animate');
   
-  // REC
-  numberElement.textContent = '🔴 REC';
+  // ACTION
+  numberElement.textContent = 'Action';
   numberElement.classList.add('animate');
   await wait(500);
   
