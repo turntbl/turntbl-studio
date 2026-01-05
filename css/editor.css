@@ -459,6 +459,7 @@ body {
 
 #edit-view {
   background: #0f0f1e;
+  overflow-y: auto;
 }
 
 .next-btn {
@@ -1168,12 +1169,13 @@ body.is-recording .record-btn {
 /* Video Preview Section */
 .video-preview-section {
   width: 100%;
-  height: 50vh;
+  height: 40vh;
+  min-height: 300px;
   background: #000;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
+  flex-shrink: 0;
 }
 
 #edit-video {
@@ -1186,6 +1188,7 @@ body.is-recording .record-btn {
 .timeline-section {
   padding: 20px;
   background: #1a1a2e;
+  flex-shrink: 0;
 }
 
 .timeline-label {
@@ -1300,6 +1303,9 @@ body.is-recording .record-btn {
 .music-card-section {
   padding: 20px;
   background: #0f0f1e;
+  max-height: 35vh;
+  overflow-y: auto;
+  flex-shrink: 0;
 }
 
 .music-card {
@@ -1460,6 +1466,11 @@ body.is-recording .record-btn {
 .edit-actions {
   padding: 20px;
   background: #0f0f1e;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  flex-shrink: 0;
+  border-top: 1px solid #1a1a2e;
 }
 
 .btn-next {
@@ -1808,6 +1819,7 @@ body.is-recording .record-btn {
   background: rgba(0, 0, 0, 0.7);
   pointer-events: none;
   z-index: 1;
+  transition: width 0.1s ease-out;
 }
 
 .trim-overlay.left {
@@ -1818,7 +1830,7 @@ body.is-recording .record-btn {
   right: 0;
 }
 
-/* Trim selection (bright area) */
+/* Trim selection (bright area) - NO dark background */
 .trim-selection {
   position: absolute;
   top: 0;
@@ -1829,4 +1841,5 @@ body.is-recording .record-btn {
   border-right: 3px solid #30B3B8;
   pointer-events: none;
   z-index: 2;
+  transition: left 0.1s ease-out, width 0.1s ease-out;
 }
