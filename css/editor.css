@@ -383,3 +383,261 @@ body {
   50% { width: 70%; }
   100% { width: 100%; }
 }
+
+/* Video Source Options */
+.video-source-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.source-option {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 32px;
+  text-align: center;
+  border: 2px solid #30B3B8;
+  transition: all 0.3s;
+}
+
+.source-option:hover {
+  border-color: #E91E8C;
+  transform: translateY(-4px);
+}
+
+.source-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.source-option h3 {
+  margin-bottom: 12px;
+  color: #30B3B8;
+}
+
+.source-option p {
+  color: #888;
+  margin-bottom: 24px;
+}
+
+/* Recording Interface */
+.recording-container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+#camera-preview {
+  width: 100%;
+  border-radius: 16px;
+  background: black;
+  aspect-ratio: 9/16;
+  object-fit: cover;
+}
+
+.recording-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.btn-icon {
+  background: #333;
+  border: none;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-icon:hover {
+  background: #444;
+  transform: scale(1.1);
+}
+
+.btn-icon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-record {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 4px solid white;
+  background: #E91E8C;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.3s;
+}
+
+.btn-record:hover {
+  transform: scale(1.1);
+}
+
+.btn-record:active {
+  transform: scale(0.95);
+}
+
+.recording-timer {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(233, 30, 140, 0.9);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+/* Video Preview Box */
+.video-preview-box {
+  max-width: 600px;
+  margin: 0 auto 32px;
+  text-align: center;
+}
+
+.video-preview-box video {
+  width: 100%;
+  border-radius: 16px;
+  background: black;
+}
+
+.video-preview-box p {
+  margin-top: 12px;
+  color: #30B3B8;
+}
+
+/* Music Options */
+.music-options {
+  display: grid;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.music-source {
+  background: #1a1a2e;
+  border-radius: 16px;
+  padding: 24px;
+  border: 2px solid #333;
+}
+
+.music-source h3 {
+  margin-bottom: 8px;
+  color: #30B3B8;
+}
+
+.music-source p {
+  color: #888;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+/* Songs List */
+.songs-list {
+  display: grid;
+  gap: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.song-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #0f0f1e;
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  transition: all 0.3s;
+}
+
+.song-item:hover {
+  border-color: #30B3B8;
+}
+
+.song-item.selected {
+  border-color: #E91E8C;
+  background: rgba(233, 30, 140, 0.1);
+}
+
+.song-item img {
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.song-info {
+  flex: 1;
+}
+
+.song-title {
+  font-weight: 600;
+  color: white;
+}
+
+.btn-select-song {
+  background: #30B3B8;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.btn-select-song:hover {
+  background: #289ca1;
+}
+
+.song-item.selected .btn-select-song {
+  background: #E91E8C;
+}
+
+.upload-audio-btn {
+  display: inline-block;
+  background: #30B3B8;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.upload-audio-btn:hover {
+  background: #289ca1;
+  transform: translateY(-2px);
+}
+
+/* Music Info in Editor */
+.music-info {
+  background: #0f0f1e;
+  padding: 16px;
+  border-radius: 8px;
+}
+
+.music-info p {
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: #30B3B8;
+}
+
+/* Loading State */
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #888;
+}
+
+/* Saving Status */
+.saving-status {
+  text-align: center;
+  padding: 60px 20px;
+}
