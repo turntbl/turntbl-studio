@@ -236,10 +236,6 @@ async function startCountdown() {
   
   overlay.classList.add('active');
   
-  // Hide bottom controls during countdown
-  const bottomControls = document.querySelector('.bottom-controls');
-  if (bottomControls) bottomControls.style.opacity = '0.3';
-  
   // 3
   numberElement.textContent = '3';
   numberElement.classList.add('animate');
@@ -265,7 +261,6 @@ async function startCountdown() {
   
   // Hide countdown, start recording
   overlay.classList.remove('active');
-  if (bottomControls) bottomControls.style.opacity = '0';
   
   startRecording();
 }
