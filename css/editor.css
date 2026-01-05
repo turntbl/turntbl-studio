@@ -130,8 +130,8 @@ body {
   font-weight: bold;
   color: white;
   text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-  opacity: 0;
-  transform: scale(0.5);
+  opacity: 1; /* Changed from 0 to 1 */
+  transform: scale(1);
 }
 
 .countdown-number.animate {
@@ -143,17 +143,17 @@ body {
     opacity: 0;
     transform: scale(0.5);
   }
-  30% {
+  20% {
     opacity: 1;
-    transform: scale(1.5);
+    transform: scale(1.2);
   }
-  70% {
+  80% {
     opacity: 1;
-    transform: scale(1.5);
+    transform: scale(1.2);
   }
   100% {
-    opacity: 0;
-    transform: scale(0.8);
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
