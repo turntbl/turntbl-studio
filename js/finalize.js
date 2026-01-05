@@ -7,7 +7,6 @@ import { supabase } from './config.js';
 // ============================================
 
 const finalizeState = {
-  videoFile: null,
   videoBlobUrl: null,
   videoElement: null,
   trimStart: 0,
@@ -32,7 +31,6 @@ const finalizeState = {
 document.addEventListener('DOMContentLoaded', () => {
   console.log('✅ Finalize screen initialized');
   
-  // Check auth
   if (!finalizeState.token || !finalizeState.artistId) {
     window.location.href = '/';
     return;
@@ -67,8 +65,6 @@ function loadEditData() {
     finalizeState.videoDuration = editData.videoDuration;
     
     console.log('✅ Edit data loaded');
-    console.log('Video duration:', finalizeState.videoDuration);
-    console.log('Trim:', finalizeState.trimStart, '-', finalizeState.trimEnd);
   } catch (error) {
     console.error('Error loading edit data:', error);
     alert('Error loading video data. Please start over.');
@@ -96,7 +92,6 @@ function handleBackToEdit() {
 // ============================================
 
 function initializeThumbnailSelector() {
-  // Create hidden video element for thumbnail capture
   const video = document.createElement('video');
   video.src = finalizeState.videoBlobUrl;
   video.muted = true;
@@ -109,18 +104,15 @@ function initializeThumbnailSelector() {
   video.addEventListener('loadedmetadata', () => {
     console.log('✅ Video loaded for thumbnail selection');
     
-    // Set scrubber to trimmed range
     const scrubber = document.getElementById('thumbnail-scrubber');
     if (scrubber) {
       scrubber.min = 0;
       scrubber.max = 100;
-      scrubber.value = 0; // Start at beginning of trimmed section
+      scrubber.value = 0;
     }
     
-    // Render thumbnail preview strip
     renderThumbnailStrip();
     
-    // Show initial thumbnail (first frame of trimmed section)
     finalizeState.selectedThumbnailTime = finalizeState.trimStart;
     updateThumbnailPreview(finalizeState.trimStart);
   });
@@ -132,7 +124,6 @@ function renderThumbnailStrip() {
   
   container.innerHTML = '';
   
-  // Show thumbnails only in the trimmed range
   const totalDuration = finalizeState.videoDuration;
   const trimDuration = finalizeState.trimEnd - finalizeState.trimStart;
   const startPercent = finalizeState.trimStart / totalDuration;
@@ -155,7 +146,6 @@ function renderThumbnailStrip() {
 function handleThumbnailScrub(e) {
   const percent = parseFloat(e.target.value) / 100;
   
-  // Map scrubber to trimmed range
   const trimDuration = finalizeState.trimEnd - finalizeState.trimStart;
   const time = finalizeState.trimStart + (percent * trimDuration);
   
@@ -174,12 +164,10 @@ async function updateThumbnailPreview(time) {
   
   await new Promise(resolve => {
     video.onseeked = () => {
-      // Draw to main preview canvas
       const ctx = canvas.getContext('2d');
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       
-      // Scale for display
       const displayWidth = Math.min(400, canvas.width);
       const displayHeight = (displayWidth / canvas.width) * canvas.height;
       canvas.style.width = displayWidth + 'px';
@@ -187,13 +175,11 @@ async function updateThumbnailPreview(time) {
       
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       
-      // Draw to selected thumbnail preview (smaller)
       const selectedCtx = selectedCanvas.getContext('2d');
       selectedCanvas.width = 120;
       selectedCanvas.height = (120 / canvas.width) * canvas.height;
       selectedCtx.drawImage(video, 0, 0, selectedCanvas.width, selectedCanvas.height);
       
-      // Store as blob for upload
       canvas.toBlob((blob) => {
         finalizeState.selectedThumbnailBlob = blob;
         console.log('✅ Thumbnail captured at', formatTime(time));
@@ -225,7 +211,7 @@ function handleCaptionInput(e) {
 
 async function handlePublish() {
   if (!finalizeState.selectedThumbnailBlob) {
-    alert('Please select a thumbnail first');
+    alert('Please wait for thumbnail to load');
     return;
   }
   
@@ -274,27 +260,23 @@ async function handlePublish() {
     
     console.log('✅ Video uploaded:', videoUrl);
     
-    // 3. Create song entry in database
-    if (statusElement) statusElement.textContent = 'Creating your post...';
+    // 3. Create discovery post (NOT song entry)
+    if (statusElement) statusElement.textContent = 'Publishing to discover feed...';
     if (progressElement) progressElement.style.width = '90%';
     
-    const songData = {
+    const postData = {
       artist_id: finalizeState.artistId,
-      title: 'Video Post', // Placeholder - can be updated later
       video_url: videoUrl,
-      thumbnail_url: thumbnailUrl,
+      linked_song_id: finalizeState.selectedSongId || null,
       caption: finalizeState.caption || null,
-      music_source_song_id: finalizeState.selectedSongId || null,
-      music_start_time: finalizeState.songTrimStart || 0,
-      duration: finalizeState.trimEnd - finalizeState.trimStart,
       created_at: new Date().toISOString()
     };
     
-    console.log('📤 Publishing song data:', songData);
+    console.log('📤 Publishing discovery post:', postData);
     
-    const { data: song, error: dbError } = await supabase
-      .from('songs')
-      .insert(songData)
+    const { data: discoveryPost, error: dbError } = await supabase
+      .from('discovery_posts')
+      .insert(postData)
       .select()
       .single();
     
@@ -303,18 +285,18 @@ async function handlePublish() {
       throw dbError;
     }
     
-    console.log('✅ Song created:', song.id);
+    console.log('✅ Discovery post created:', discoveryPost.id);
     
     // 4. Success!
     if (statusElement) statusElement.textContent = 'Success! Redirecting...';
     if (progressElement) progressElement.style.width = '100%';
     
-    // Clean up sessionStorage
+    // Clean up
     sessionStorage.removeItem('turntbl_edit_data');
     sessionStorage.removeItem('turntbl_video_blob_url');
     
     setTimeout(() => {
-      window.location.href = `${finalizeState.returnUrl}?published=true&song_id=${song.id}`;
+      window.location.href = `${finalizeState.returnUrl}?published=true&video_id=${discoveryPost.id}`;
     }, 1000);
     
   } catch (error) {
