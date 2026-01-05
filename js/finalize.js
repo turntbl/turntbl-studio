@@ -1,4 +1,4 @@
-// js/finalize.js
+// js/finalize.js - COMPLETE FILE
 
 import { supabase } from './config.js';
 
@@ -8,7 +8,7 @@ import { supabase } from './config.js';
 
 const finalizeState = {
   videoFile: null,
-  videoBlob: null,
+  videoBlobUrl: null,
   videoElement: null,
   trimStart: 0,
   trimEnd: 30,
@@ -17,7 +17,7 @@ const finalizeState = {
   songTrimStart: 0,
   songTrimEnd: 0,
   thumbnails: [],
-  selectedThumbnailIndex: 0,
+  selectedThumbnailTime: 0,
   selectedThumbnailBlob: null,
   caption: '',
   token: sessionStorage.getItem('turntbl_token'),
@@ -32,20 +32,22 @@ const finalizeState = {
 document.addEventListener('DOMContentLoaded', () => {
   console.log('✅ Finalize screen initialized');
   
-  // Load data from edit screen
+  // Check auth
+  if (!finalizeState.token || !finalizeState.artistId) {
+    window.location.href = '/';
+    return;
+  }
+  
   loadEditData();
-  
-  // Setup event listeners
   setupEventListeners();
-  
-  // Initialize thumbnail selector
   initializeThumbnailSelector();
 });
 
 function loadEditData() {
   const editDataStr = sessionStorage.getItem('turntbl_edit_data');
+  const videoBlobUrl = sessionStorage.getItem('turntbl_video_blob_url');
   
-  if (!editDataStr) {
+  if (!editDataStr || !videoBlobUrl) {
     alert('No video data found. Please start over.');
     window.location.href = '/editor.html';
     return;
@@ -54,7 +56,7 @@ function loadEditData() {
   try {
     const editData = JSON.parse(editDataStr);
     
-    finalizeState.videoBlob = editData.videoBlob;
+    finalizeState.videoBlobUrl = videoBlobUrl;
     finalizeState.trimStart = editData.trimStart;
     finalizeState.trimEnd = editData.trimEnd;
     finalizeState.selectedSongId = editData.selectedSongId;
@@ -65,6 +67,8 @@ function loadEditData() {
     finalizeState.videoDuration = editData.videoDuration;
     
     console.log('✅ Edit data loaded');
+    console.log('Video duration:', finalizeState.videoDuration);
+    console.log('Trim:', finalizeState.trimStart, '-', finalizeState.trimEnd);
   } catch (error) {
     console.error('Error loading edit data:', error);
     alert('Error loading video data. Please start over.');
@@ -94,26 +98,30 @@ function handleBackToEdit() {
 function initializeThumbnailSelector() {
   // Create hidden video element for thumbnail capture
   const video = document.createElement('video');
-  video.src = finalizeState.videoBlob;
+  video.src = finalizeState.videoBlobUrl;
   video.muted = true;
+  video.crossOrigin = 'anonymous';
   video.style.display = 'none';
   document.body.appendChild(video);
   
   finalizeState.videoElement = video;
   
   video.addEventListener('loadedmetadata', () => {
-    // Set scrubber range based on trimmed video
+    console.log('✅ Video loaded for thumbnail selection');
+    
+    // Set scrubber to trimmed range
     const scrubber = document.getElementById('thumbnail-scrubber');
     if (scrubber) {
-      scrubber.min = finalizeState.trimStart;
-      scrubber.max = finalizeState.trimEnd;
-      scrubber.value = finalizeState.trimStart;
+      scrubber.min = 0;
+      scrubber.max = 100;
+      scrubber.value = 0; // Start at beginning of trimmed section
     }
     
     // Render thumbnail preview strip
     renderThumbnailStrip();
     
-    // Show initial thumbnail
+    // Show initial thumbnail (first frame of trimmed section)
+    finalizeState.selectedThumbnailTime = finalizeState.trimStart;
     updateThumbnailPreview(finalizeState.trimStart);
   });
 }
@@ -124,7 +132,18 @@ function renderThumbnailStrip() {
   
   container.innerHTML = '';
   
-  finalizeState.thumbnails.forEach((thumbnail, index) => {
+  // Show thumbnails only in the trimmed range
+  const totalDuration = finalizeState.videoDuration;
+  const trimDuration = finalizeState.trimEnd - finalizeState.trimStart;
+  const startPercent = finalizeState.trimStart / totalDuration;
+  const endPercent = finalizeState.trimEnd / totalDuration;
+  
+  const startIndex = Math.floor(startPercent * finalizeState.thumbnails.length);
+  const endIndex = Math.ceil(endPercent * finalizeState.thumbnails.length);
+  
+  const relevantThumbnails = finalizeState.thumbnails.slice(startIndex, endIndex);
+  
+  relevantThumbnails.forEach((thumbnail, index) => {
     const img = document.createElement('img');
     img.src = thumbnail;
     img.className = 'scrubber-thumbnail';
@@ -134,7 +153,13 @@ function renderThumbnailStrip() {
 }
 
 function handleThumbnailScrub(e) {
-  const time = parseFloat(e.target.value);
+  const percent = parseFloat(e.target.value) / 100;
+  
+  // Map scrubber to trimmed range
+  const trimDuration = finalizeState.trimEnd - finalizeState.trimStart;
+  const time = finalizeState.trimStart + (percent * trimDuration);
+  
+  finalizeState.selectedThumbnailTime = time;
   updateThumbnailPreview(time);
 }
 
@@ -149,12 +174,12 @@ async function updateThumbnailPreview(time) {
   
   await new Promise(resolve => {
     video.onseeked = () => {
-      // Draw to main canvas
+      // Draw to main preview canvas
       const ctx = canvas.getContext('2d');
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       
-      // Scale for display (16:9 aspect ratio, max 400px wide)
+      // Scale for display
       const displayWidth = Math.min(400, canvas.width);
       const displayHeight = (displayWidth / canvas.width) * canvas.height;
       canvas.style.width = displayWidth + 'px';
@@ -171,6 +196,7 @@ async function updateThumbnailPreview(time) {
       // Store as blob for upload
       canvas.toBlob((blob) => {
         finalizeState.selectedThumbnailBlob = blob;
+        console.log('✅ Thumbnail captured at', formatTime(time));
       }, 'image/jpeg', 0.9);
       
       resolve();
@@ -198,17 +224,22 @@ function handleCaptionInput(e) {
 // ============================================
 
 async function handlePublish() {
+  if (!finalizeState.selectedThumbnailBlob) {
+    alert('Please select a thumbnail first');
+    return;
+  }
+  
   if (!confirm('Publish this video to Turntbl?')) return;
   
-  // Show publishing view
   showView('publishing-view');
   
   const statusElement = document.getElementById('publish-status');
-  if (statusElement) statusElement.textContent = 'Preparing video...';
+  const progressElement = document.getElementById('publish-progress');
   
   try {
     // 1. Upload thumbnail
     if (statusElement) statusElement.textContent = 'Uploading thumbnail...';
+    if (progressElement) progressElement.style.width = '20%';
     
     const thumbnailFileName = `${finalizeState.artistId}/${Date.now()}_thumbnail.jpg`;
     const { error: thumbError } = await supabase.storage
@@ -221,14 +252,16 @@ async function handlePublish() {
       .from('songs')
       .getPublicUrl(thumbnailFileName);
     
+    console.log('✅ Thumbnail uploaded:', thumbnailUrl);
+    
     // 2. Upload video
     if (statusElement) statusElement.textContent = 'Uploading video...';
+    if (progressElement) progressElement.style.width = '60%';
     
-    // Fetch the video blob
-    const videoResponse = await fetch(finalizeState.videoBlob);
+    const videoResponse = await fetch(finalizeState.videoBlobUrl);
     const videoBlob = await videoResponse.blob();
     
-    const videoFileName = `${finalizeState.artistId}/${Date.now()}_promo.mp4`;
+    const videoFileName = `${finalizeState.artistId}/${Date.now()}_promo.webm`;
     const { error: videoError } = await supabase.storage
       .from('songs')
       .upload(videoFileName, videoBlob);
@@ -239,41 +272,54 @@ async function handlePublish() {
       .from('songs')
       .getPublicUrl(videoFileName);
     
+    console.log('✅ Video uploaded:', videoUrl);
+    
     // 3. Create song entry in database
-    if (statusElement) statusElement.textContent = 'Creating song entry...';
+    if (statusElement) statusElement.textContent = 'Creating your post...';
+    if (progressElement) progressElement.style.width = '90%';
+    
+    const songData = {
+      artist_id: finalizeState.artistId,
+      title: 'Video Post', // Placeholder - can be updated later
+      video_url: videoUrl,
+      thumbnail_url: thumbnailUrl,
+      caption: finalizeState.caption || null,
+      music_source_song_id: finalizeState.selectedSongId || null,
+      music_start_time: finalizeState.songTrimStart || 0,
+      duration: finalizeState.trimEnd - finalizeState.trimStart,
+      created_at: new Date().toISOString()
+    };
+    
+    console.log('📤 Publishing song data:', songData);
     
     const { data: song, error: dbError } = await supabase
       .from('songs')
-      .insert({
-        artist_id: finalizeState.artistId,
-        title: 'Untitled', // Will be updated when they add full song details
-        video_url: videoUrl,
-        thumbnail_url: thumbnailUrl,
-        caption: finalizeState.caption,
-        music_source_song_id: finalizeState.selectedSongId,
-        music_start_time: finalizeState.songTrimStart,
-        duration: finalizeState.trimEnd - finalizeState.trimStart,
-        created_at: new Date().toISOString()
-      })
+      .insert(songData)
       .select()
       .single();
     
-    if (dbError) throw dbError;
+    if (dbError) {
+      console.error('Database error:', dbError);
+      throw dbError;
+    }
     
-    // 4. Success! Redirect
+    console.log('✅ Song created:', song.id);
+    
+    // 4. Success!
     if (statusElement) statusElement.textContent = 'Success! Redirecting...';
+    if (progressElement) progressElement.style.width = '100%';
     
     // Clean up sessionStorage
     sessionStorage.removeItem('turntbl_edit_data');
+    sessionStorage.removeItem('turntbl_video_blob_url');
     
     setTimeout(() => {
-      // Redirect to getturntbl.com discover feed or song page
       window.location.href = `${finalizeState.returnUrl}?published=true&song_id=${song.id}`;
     }, 1000);
     
   } catch (error) {
     console.error('❌ Publish error:', error);
-    alert(`Failed to publish: ${error.message}`);
+    alert(`Failed to publish: ${error.message}\n\nPlease try again or contact support.`);
     showView('finalize-view');
   }
 }
@@ -290,4 +336,14 @@ function showView(viewId) {
   if (targetView) {
     targetView.classList.add('active');
   }
+}
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+
+function formatTime(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
