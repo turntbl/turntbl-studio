@@ -461,6 +461,14 @@ function handleReviewScrub(e) {
 }
 
 function handleRetake() {
+  // Stop and clean up the review video
+  const reviewVideo = document.getElementById('review-video');
+  if (reviewVideo) {
+    reviewVideo.pause();
+    reviewVideo.currentTime = 0;
+    reviewVideo.src = '';
+  }
+  
   editorState.videoFile = null;
   editorState.videoBlob = null;
   editorState.videoElement = null;
@@ -480,6 +488,13 @@ function resetToCamera() {
 }
 
 function handleContinueToEdit() {
+  // Stop the review video before transitioning
+  const reviewVideo = document.getElementById('review-video');
+  if (reviewVideo) {
+    reviewVideo.pause();
+    reviewVideo.currentTime = 0;
+  }
+  
   showEditScreen();
 }
 
@@ -1001,6 +1016,19 @@ function showTooltip(message) {
 
 function handleCancel() {
   if (confirm('Are you sure? All changes will be lost.')) {
+    // Stop any playing videos
+    const reviewVideo = document.getElementById('review-video');
+    if (reviewVideo) {
+      reviewVideo.pause();
+      reviewVideo.src = '';
+    }
+    
+    const editVideo = document.getElementById('edit-video');
+    if (editVideo) {
+      editVideo.pause();
+      editVideo.src = '';
+    }
+    
     stopCamera();
     window.location.href = editorState.returnUrl;
   }
