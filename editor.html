@@ -2,218 +2,263 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create Video - Turntbl Studio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Turntbl Studio</title>
   <link rel="stylesheet" href="css/editor.css">
 </head>
 <body>
-  <!-- Header -->
-  <header class="editor-header">
-    <div class="logo">Turntbl Studio</div>
-    <button id="cancel-btn" class="btn-secondary">Cancel</button>
-  </header>
+  
+  <!-- State: CAMERA_READY -->
+  <section id="camera-view" class="view active">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <button id="cancel-btn" class="icon-btn">✕</button>
+      <button id="flash-btn" class="icon-btn">⚡</button>
+    </div>
 
-  <!-- Main Editor -->
-  <main class="editor-container">
-    
-    <!-- Step 1: Record or Upload Video -->
-    <section id="video-source-section" class="editor-section active">
-      <h2>Create Your Video</h2>
+    <!-- Camera Feed -->
+    <video id="camera-preview" autoplay muted playsinline></video>
+
+    <!-- Countdown Overlay (hidden by default) -->
+    <div id="countdown-overlay" class="countdown-overlay">
+      <div id="countdown-number" class="countdown-number">3</div>
+    </div>
+
+    <!-- Recording Indicator (hidden by default) -->
+    <div id="recording-indicator" class="recording-indicator">
+      <span class="rec-dot"></span>
+      <span id="recording-timer">0:00</span>
+    </div>
+
+    <!-- Bottom Controls -->
+    <div class="bottom-controls">
+      <!-- Tool Icons -->
+      <div class="tool-icons">
+        <button id="upload-btn" class="tool-btn">
+          <span class="tool-icon">📁</span>
+          <span class="tool-label">Upload</span>
+        </button>
+        <button id="effects-btn" class="tool-btn disabled">
+          <span class="tool-icon">✨</span>
+          <span class="tool-label">Effects</span>
+        </button>
+        <button id="timer-btn" class="tool-btn disabled">
+          <span class="tool-icon">⏱️</span>
+          <span class="tool-label">Timer</span>
+        </button>
+      </div>
+
+      <!-- Record Button -->
+      <button id="record-btn" class="record-btn">
+        <div class="record-inner"></div>
+      </button>
+
+      <!-- Flip Camera Button -->
+      <button id="flip-camera-btn" class="flip-btn">🔄</button>
+    </div>
+
+    <!-- Hidden file input -->
+    <input type="file" id="video-upload-input" accept="video/*" hidden>
+  </section>
+
+  <!-- State: POST_RECORD_REVIEW -->
+  <section id="review-view" class="view">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <button id="review-cancel-btn" class="icon-btn">✕</button>
+      <span id="review-duration" class="duration-display">0:00</span>
+    </div>
+
+    <!-- Video Preview -->
+    <video id="review-video" playsinline loop></video>
+
+    <!-- Scrubber -->
+    <div class="scrubber-container">
+      <input type="range" id="review-scrubber" class="scrubber" min="0" max="100" value="0">
+      <div class="scrubber-times">
+        <span id="scrubber-start">0:00</span>
+        <span id="scrubber-end">0:00</span>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="review-actions">
+      <button id="retake-btn" class="action-btn secondary">
+        ← Retake
+      </button>
+      <button id="continue-btn" class="action-btn primary">
+        Continue →
+      </button>
+    </div>
+  </section>
+
+  <!-- State: EDIT_MODE -->
+  <section id="edit-view" class="view">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <button id="edit-cancel-btn" class="icon-btn">✕</button>
+      <span id="edit-duration" class="duration-display">0:00</span>
+      <button id="next-btn" class="next-btn">Next</button>
+    </div>
+
+    <!-- Video Preview with Text Overlays -->
+    <div class="video-container">
+      <canvas id="video-canvas"></canvas>
+      <div id="text-overlay-container" class="text-overlay-container"></div>
+      <video id="edit-video" playsinline loop style="display: none;"></video>
+    </div>
+
+    <!-- Video Controls -->
+    <div class="video-controls">
+      <button id="play-pause-btn" class="control-btn">▶️</button>
+      <input type="range" id="edit-scrubber" class="scrubber" min="0" max="100" value="0">
+      <span id="edit-time">0:00 / 0:00</span>
+    </div>
+
+    <!-- Tool Tabs -->
+    <div class="tool-tabs">
+      <button class="tool-tab" data-tool="music">
+        <span class="tab-icon">🎵</span>
+        <span class="tab-label">Sounds</span>
+      </button>
+      <button class="tool-tab" data-tool="text">
+        <span class="tab-icon">💬</span>
+        <span class="tab-label">Text</span>
+      </button>
+      <button class="tool-tab" data-tool="trim">
+        <span class="tab-icon">✂️</span>
+        <span class="tab-label">Trim</span>
+      </button>
+    </div>
+
+    <!-- Tool Drawers -->
+    <div id="tool-drawer" class="tool-drawer">
       
-      <div class="video-source-options">
-        <!-- Record Video -->
-        <div class="source-option" id="record-option">
-          <div class="source-icon">📹</div>
-          <h3>Record Video</h3>
-          <p>Use your camera to record a 30-second promo</p>
-          <button class="btn-primary" id="start-recording-btn">
-            Start Recording
-          </button>
-        </div>
-
-        <!-- Upload Video -->
-        <div class="source-option" id="upload-option">
-          <div class="source-icon">📁</div>
-          <h3>Upload Video</h3>
-          <p>Choose an existing video from your device</p>
-          <label for="video-upload" class="btn-primary" style="display: inline-block; cursor: pointer;">
-            Choose Video
-          </label>
-          <input type="file" id="video-upload" accept="video/*" hidden>
-        </div>
-      </div>
-
-      <!-- Recording Interface (Hidden Initially) -->
-      <div id="recording-interface" style="display: none;">
-        <div class="recording-container">
-          <video id="camera-preview" autoplay muted playsinline></video>
-          
-          <div class="recording-controls">
-            <button id="flip-camera-btn" class="btn-icon" title="Flip Camera">🔄</button>
-            <button id="record-btn" class="btn-record">
-              <span class="record-icon"></span>
-            </button>
-            <button id="stop-recording-btn" class="btn-icon" style="display: none;">⏹️</button>
-            <div id="recording-timer" class="recording-timer" style="display: none;">0:00</div>
-          </div>
-
-          <button id="back-to-options-btn" class="btn-secondary" style="margin-top: 20px;">
-            ← Back to Options
-          </button>
-        </div>
-      </div>
-
-      <!-- Video Preview After Recording/Upload -->
-      <div id="video-preview-section" style="display: none;">
-        <div class="video-preview-box">
-          <video id="preview-video" controls></video>
-          <p id="video-filename"></p>
+      <!-- Music Drawer -->
+      <div id="music-drawer" class="drawer-content">
+        <div class="drawer-header">
+          <h3>🎵 Add Sound</h3>
+          <button class="close-drawer-btn">✕</button>
         </div>
         
-        <div class="button-group">
-          <button id="retake-video-btn" class="btn-secondary">← Retake</button>
-          <button id="continue-to-music-btn" class="btn-primary">Continue →</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- Step 2: Add Music -->
-    <section id="music-section" class="editor-section">
-      <h2>Add Music</h2>
-      
-      <div class="music-options">
-        <!-- Your Songs -->
-        <div class="music-source">
-          <h3>🎵 Your Songs</h3>
-          <p>Choose from songs you've already uploaded to Turntbl</p>
-          <div id="your-songs-list" class="songs-list">
-            <div class="loading">Loading your songs...</div>
+        <div class="drawer-body">
+          <!-- Your Songs -->
+          <div class="music-section">
+            <h4>Your Songs</h4>
+            <div id="your-songs-list" class="songs-list">
+              <div class="loading">Loading...</div>
+            </div>
           </div>
-        </div>
 
-        <!-- Upload New Audio -->
-        <div class="music-source">
-          <h3>📁 Upload New Audio</h3>
-          <p>Upload the audio file for this video</p>
-          <label for="audio-upload" class="upload-audio-btn">
-            Choose Audio File
-            <input type="file" id="audio-upload" accept="audio/*" hidden>
-          </label>
-          <div id="audio-preview" style="display: none; margin-top: 16px;">
-            <audio id="audio-element" controls style="width: 100%;"></audio>
-            <p id="audio-filename" style="margin-top: 8px; color: #30B3B8;"></p>
+          <!-- Upload New Audio -->
+          <div class="music-section">
+            <h4>Upload New Audio</h4>
+            <label for="audio-upload-input" class="upload-audio-btn">
+              Choose Audio File
+            </label>
+            <input type="file" id="audio-upload-input" accept="audio/*" hidden>
+            <div id="audio-preview" class="audio-preview" style="display: none;">
+              <audio id="audio-element" controls></audio>
+              <p id="audio-filename"></p>
+            </div>
           </div>
-        </div>
 
-        <!-- No Music Option -->
-        <div class="music-source">
-          <h3>🔇 No Music</h3>
-          <p>Use the original audio from your video</p>
-          <button id="no-music-btn" class="btn-tool">
-            Keep Original Audio
-          </button>
+          <!-- Original Audio -->
+          <div class="music-section">
+            <h4>Original Audio</h4>
+            <button id="original-audio-btn" class="option-btn">
+              🔇 Use Original Audio
+            </button>
+          </div>
         </div>
       </div>
 
-      <div class="button-group">
-        <button id="back-to-video-btn" class="btn-secondary">← Back</button>
-        <button id="continue-to-edit-btn" class="btn-primary" disabled>
-          Continue to Editing →
-        </button>
-      </div>
-    </section>
-
-    <!-- Step 3: Edit Video -->
-    <section id="edit-section" class="editor-section">
-      <h2>Edit Your Video</h2>
-      
-      <div class="edit-workspace">
-        <!-- Video Preview -->
-        <div class="video-preview-container">
-          <div class="canvas-container">
-            <canvas id="preview-canvas"></canvas>
-            <div id="text-overlay-container" class="text-overlay-container"></div>
-          </div>
-          <div class="video-controls">
-            <button id="play-pause-btn">▶️</button>
-            <input type="range" id="video-scrubber" min="0" max="100" value="0">
-            <span id="current-time">0:00</span> / <span id="total-time">0:00</span>
-          </div>
+      <!-- Text Drawer -->
+      <div id="text-drawer" class="drawer-content">
+        <div class="drawer-header">
+          <h3>💬 Add Text</h3>
+          <button class="close-drawer-btn">✕</button>
         </div>
-
-        <!-- Editing Tools -->
-        <div class="editing-tools">
+        
+        <div class="drawer-body">
+          <input type="text" id="text-input" class="text-input" placeholder="Type text here..." maxlength="100">
           
-          <!-- Trim Tool -->
-          <div class="tool-section">
-            <h3>✂️ Trim Video (Max 30s)</h3>
-            <div class="trim-controls">
-              <label>
-                Start: <input type="number" id="trim-start" min="0" value="0" step="0.1"> sec
-              </label>
-              <label>
-                End: <input type="number" id="trim-end" min="0" value="30" step="0.1"> sec
-              </label>
-              <button id="apply-trim-btn" class="btn-tool">Apply Trim</button>
+          <div class="text-controls">
+            <div class="control-group">
+              <label>Font</label>
+              <select id="text-font" class="text-select">
+                <option value="Arial">Arial</option>
+                <option value="Impact">Impact</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Courier New">Courier</option>
+                <option value="Comic Sans MS">Comic Sans</option>
+              </select>
             </div>
-            <div id="trim-status" style="margin-top: 12px; color: #30B3B8;"></div>
-          </div>
-
-          <!-- Text Overlay -->
-          <div class="tool-section">
-            <h3>📝 Add Text</h3>
-            <div class="text-controls">
-              <input type="text" id="text-input" placeholder="Enter text..." maxlength="100">
-              <div class="text-style-grid">
-                <input type="color" id="text-color" value="#ffffff" title="Text color">
-                <select id="text-font">
-                  <option value="Arial">Arial</option>
-                  <option value="Impact">Impact</option>
-                  <option value="Georgia">Georgia</option>
-                  <option value="Courier New">Courier</option>
-                  <option value="Comic Sans MS">Comic Sans</option>
-                  <option value="Times New Roman">Times</option>
-                </select>
-                <input type="number" id="text-size" min="20" max="100" value="48" placeholder="Size">
-              </div>
-              <button id="add-text-btn" class="btn-tool">Add Text</button>
+            
+            <div class="control-group">
+              <label>Size</label>
+              <input type="number" id="text-size" class="text-number" min="20" max="100" value="48">
             </div>
-            <div id="text-list" class="text-list"></div>
-          </div>
-
-          <!-- Music Control -->
-          <div class="tool-section">
-            <h3>🎵 Music</h3>
-            <div id="selected-music-info" class="music-info">
-              <p id="music-name">Original audio</p>
-              <button id="change-music-btn" class="btn-tool">Change Music</button>
+            
+            <div class="control-group">
+              <label>Color</label>
+              <input type="color" id="text-color" class="text-color" value="#ffffff">
             </div>
           </div>
 
+          <button id="add-text-btn" class="action-btn primary">Add Text</button>
+
+          <div id="text-list" class="text-list"></div>
         </div>
       </div>
 
-      <div class="button-group">
-        <button id="back-to-music-btn" class="btn-secondary">← Back</button>
-        <button id="save-video-btn" class="btn-primary btn-large">
-          💾 Save Video
-        </button>
-      </div>
-    </section>
+      <!-- Trim Drawer -->
+      <div id="trim-drawer" class="drawer-content">
+        <div class="drawer-header">
+          <h3>✂️ Trim Video</h3>
+          <button class="close-drawer-btn">✕</button>
+        </div>
+        
+        <div class="drawer-body">
+          <p class="trim-info">Maximum 30 seconds</p>
+          
+          <div class="trim-controls">
+            <div class="control-group">
+              <label>Start</label>
+              <input type="number" id="trim-start" class="trim-input" min="0" step="0.1" value="0">
+              <span class="unit">sec</span>
+            </div>
+            
+            <div class="control-group">
+              <label>End</label>
+              <input type="number" id="trim-end" class="trim-input" min="0" step="0.1" value="30">
+              <span class="unit">sec</span>
+            </div>
+          </div>
 
-    <!-- Saving Progress -->
-    <section id="saving-section" class="editor-section">
-      <div class="saving-status">
-        <div class="spinner-large"></div>
-        <h2>Saving Your Video...</h2>
-        <p id="save-status">Processing video...</p>
-        <div class="progress-bar">
-          <div id="progress-fill" class="progress-fill"></div>
+          <button id="apply-trim-btn" class="action-btn primary">Apply Trim</button>
+          
+          <div id="trim-status" class="trim-status"></div>
         </div>
       </div>
-    </section>
 
-  </main>
+    </div>
+  </section>
+
+  <!-- State: SAVING -->
+  <section id="saving-view" class="view">
+    <div class="saving-container">
+      <div class="spinner-large"></div>
+      <h2>Saving Your Video...</h2>
+      <p id="save-status">Uploading...</p>
+      <div class="progress-bar">
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tooltip for disabled buttons -->
+  <div id="tooltip" class="tooltip">Coming Soon!</div>
 
   <script type="module" src="js/editor.js"></script>
 </body>
