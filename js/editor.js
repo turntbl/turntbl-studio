@@ -29,33 +29,173 @@ if (!token || !artistId) {
   window.location.href = '/';
 }
 
+// Wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', initializeApp);
+
+function initializeApp() {
+  console.log('✅ App initialized');
+  setupEventListeners();
+}
+
 // Section navigation
 function showSection(sectionId) {
   document.querySelectorAll('.editor-section').forEach(section => {
     section.classList.remove('active');
   });
-  document.getElementById(sectionId).classList.add('active');
+  const targetSection = document.getElementById(sectionId);
+  if (targetSection) {
+    targetSection.classList.add('active');
+  }
+}
+
+// ============================================
+// SETUP EVENT LISTENERS
+// ============================================
+
+function setupEventListeners() {
+  // Step 1: Video Source
+  const startRecordingBtn = document.getElementById('start-recording-btn');
+  const backToOptionsBtn = document.getElementById('back-to-options-btn');
+  const videoUploadInput = document.getElementById('video-upload');
+  const retakeVideoBtn = document.getElementById('retake-video-btn');
+  const continueToMusicBtn = document.getElementById('continue-to-music-btn');
+  
+  if (startRecordingBtn) {
+    startRecordingBtn.addEventListener('click', handleStartRecording);
+  }
+  
+  if (backToOptionsBtn) {
+    backToOptionsBtn.addEventListener('click', handleBackToOptions);
+  }
+  
+  if (videoUploadInput) {
+    videoUploadInput.addEventListener('change', handleVideoUpload);
+  }
+  
+  if (retakeVideoBtn) {
+    retakeVideoBtn.addEventListener('click', handleRetakeVideo);
+  }
+  
+  if (continueToMusicBtn) {
+    continueToMusicBtn.addEventListener('click', handleContinueToMusic);
+  }
+  
+  // Recording controls
+  const flipCameraBtn = document.getElementById('flip-camera-btn');
+  const recordBtn = document.getElementById('record-btn');
+  const stopRecordingBtn = document.getElementById('stop-recording-btn');
+  
+  if (flipCameraBtn) {
+    flipCameraBtn.addEventListener('click', handleFlipCamera);
+  }
+  
+  if (recordBtn) {
+    recordBtn.addEventListener('click', handleRecordBtn);
+  }
+  
+  if (stopRecordingBtn) {
+    stopRecordingBtn.addEventListener('click', handleStopRecording);
+  }
+  
+  // Step 2: Music
+  const audioUploadInput = document.getElementById('audio-upload');
+  const noMusicBtn = document.getElementById('no-music-btn');
+  const backToVideoBtn = document.getElementById('back-to-video-btn');
+  const continueToEditBtn = document.getElementById('continue-to-edit-btn');
+  
+  if (audioUploadInput) {
+    audioUploadInput.addEventListener('change', handleAudioUpload);
+  }
+  
+  if (noMusicBtn) {
+    noMusicBtn.addEventListener('click', handleNoMusic);
+  }
+  
+  if (backToVideoBtn) {
+    backToVideoBtn.addEventListener('click', () => {
+      showSection('video-source-section');
+      const videoPreviewSection = document.getElementById('video-preview-section');
+      if (videoPreviewSection) {
+        videoPreviewSection.style.display = 'block';
+      }
+    });
+  }
+  
+  if (continueToEditBtn) {
+    continueToEditBtn.addEventListener('click', () => {
+      initializeEditor();
+      showSection('edit-section');
+    });
+  }
+  
+  // Step 3: Editor
+  const playPauseBtn = document.getElementById('play-pause-btn');
+  const videoScrubber = document.getElementById('video-scrubber');
+  const applyTrimBtn = document.getElementById('apply-trim-btn');
+  const addTextBtn = document.getElementById('add-text-btn');
+  const changeMusicBtn = document.getElementById('change-music-btn');
+  const backToMusicBtn = document.getElementById('back-to-music-btn');
+  const saveVideoBtn = document.getElementById('save-video-btn');
+  
+  if (playPauseBtn) {
+    playPauseBtn.addEventListener('click', handlePlayPause);
+  }
+  
+  if (videoScrubber) {
+    videoScrubber.addEventListener('input', handleScrubber);
+  }
+  
+  if (applyTrimBtn) {
+    applyTrimBtn.addEventListener('click', handleApplyTrim);
+  }
+  
+  if (addTextBtn) {
+    addTextBtn.addEventListener('click', handleAddText);
+  }
+  
+  if (changeMusicBtn) {
+    changeMusicBtn.addEventListener('click', () => showSection('music-section'));
+  }
+  
+  if (backToMusicBtn) {
+    backToMusicBtn.addEventListener('click', () => showSection('music-section'));
+  }
+  
+  if (saveVideoBtn) {
+    saveVideoBtn.addEventListener('click', handleSaveVideo);
+  }
+  
+  // Cancel button
+  const cancelBtn = document.getElementById('cancel-btn');
+  if (cancelBtn) {
+    cancelBtn.addEventListener('click', handleCancel);
+  }
 }
 
 // ============================================
 // STEP 1: RECORD OR UPLOAD VIDEO
 // ============================================
 
-// Start Recording
-document.getElementById('start-recording-btn').addEventListener('click', async () => {
-  document.getElementById('video-source-options').style.display = 'none';
-  document.getElementById('recording-interface').style.display = 'block';
+async function handleStartRecording() {
+  const videoSourceOptions = document.getElementById('video-source-options');
+  const recordingInterface = document.getElementById('recording-interface');
+  
+  if (videoSourceOptions) videoSourceOptions.style.display = 'none';
+  if (recordingInterface) recordingInterface.style.display = 'block';
+  
   await startCamera();
-});
+}
 
-// Back to options
-document.getElementById('back-to-options-btn').addEventListener('click', () => {
+function handleBackToOptions() {
   stopCamera();
-  document.getElementById('recording-interface').style.display = 'none';
-  document.getElementById('video-source-options').style.display = 'grid';
-});
+  
+  const recordingInterface = document.getElementById('recording-interface');
+  const videoSourceOptions = document.getElementById('video-source-options');
+  
+  if (recordingInterface) recordingInterface.style.display = 'none';
+  if (videoSourceOptions) videoSourceOptions.style.display = 'grid';
+}
 
-// Start camera
 async function startCamera() {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -65,17 +205,18 @@ async function startCamera() {
     
     editorState.recordingStream = stream;
     const preview = document.getElementById('camera-preview');
-    preview.srcObject = stream;
+    if (preview) {
+      preview.srcObject = stream;
+    }
     
     console.log('✅ Camera started');
   } catch (error) {
     console.error('Camera error:', error);
     alert('Could not access camera: ' + error.message);
-    document.getElementById('back-to-options-btn').click();
+    handleBackToOptions();
   }
 }
 
-// Stop camera
 function stopCamera() {
   if (editorState.recordingStream) {
     editorState.recordingStream.getTracks().forEach(track => track.stop());
@@ -83,23 +224,21 @@ function stopCamera() {
   }
 }
 
-// Flip camera
-document.getElementById('flip-camera-btn').addEventListener('click', async () => {
+async function handleFlipCamera() {
   editorState.facingMode = editorState.facingMode === 'user' ? 'environment' : 'user';
   stopCamera();
   await startCamera();
-});
+}
 
-// Start/Stop recording
-document.getElementById('record-btn').addEventListener('click', () => {
+function handleRecordBtn() {
   if (!editorState.mediaRecorder || editorState.mediaRecorder.state === 'inactive') {
     startRecording();
   }
-});
+}
 
-document.getElementById('stop-recording-btn').addEventListener('click', () => {
+function handleStopRecording() {
   stopRecording();
-});
+}
 
 function startRecording() {
   editorState.recordedChunks = [];
@@ -129,10 +268,15 @@ function startRecording() {
   editorState.recordingStartTime = Date.now();
   
   // Show recording UI
-  document.getElementById('record-btn').style.display = 'none';
-  document.getElementById('stop-recording-btn').style.display = 'block';
-  document.getElementById('recording-timer').style.display = 'block';
-  document.getElementById('flip-camera-btn').disabled = true;
+  const recordBtn = document.getElementById('record-btn');
+  const stopRecordingBtn = document.getElementById('stop-recording-btn');
+  const recordingTimer = document.getElementById('recording-timer');
+  const flipCameraBtn = document.getElementById('flip-camera-btn');
+  
+  if (recordBtn) recordBtn.style.display = 'none';
+  if (stopRecordingBtn) stopRecordingBtn.style.display = 'block';
+  if (recordingTimer) recordingTimer.style.display = 'block';
+  if (flipCameraBtn) flipCameraBtn.disabled = true;
   
   // Start timer
   const timerInterval = setInterval(() => {
@@ -142,7 +286,10 @@ function startRecording() {
     }
     
     const elapsed = (Date.now() - editorState.recordingStartTime) / 1000;
-    document.getElementById('recording-timer').textContent = formatTime(elapsed);
+    const timerElement = document.getElementById('recording-timer');
+    if (timerElement) {
+      timerElement.textContent = formatTime(elapsed);
+    }
     
     // Auto-stop at 30 seconds
     if (elapsed >= 30) {
@@ -160,10 +307,15 @@ function stopRecording() {
     stopCamera();
     
     // Reset UI
-    document.getElementById('record-btn').style.display = 'block';
-    document.getElementById('stop-recording-btn').style.display = 'none';
-    document.getElementById('recording-timer').style.display = 'none';
-    document.getElementById('flip-camera-btn').disabled = false;
+    const recordBtn = document.getElementById('record-btn');
+    const stopRecordingBtn = document.getElementById('stop-recording-btn');
+    const recordingTimer = document.getElementById('recording-timer');
+    const flipCameraBtn = document.getElementById('flip-camera-btn');
+    
+    if (recordBtn) recordBtn.style.display = 'block';
+    if (stopRecordingBtn) stopRecordingBtn.style.display = 'none';
+    if (recordingTimer) recordingTimer.style.display = 'none';
+    if (flipCameraBtn) flipCameraBtn.disabled = false;
     
     console.log('⏹️ Recording stopped');
   }
@@ -177,8 +329,7 @@ function handleRecordedVideo(blob) {
   showVideoPreview(URL.createObjectURL(blob), 'Recorded video');
 }
 
-// Upload video
-document.getElementById('video-upload').addEventListener('change', (e) => {
+function handleVideoUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
   
@@ -189,42 +340,60 @@ document.getElementById('video-upload').addEventListener('change', (e) => {
   
   editorState.videoFile = file;
   showVideoPreview(URL.createObjectURL(file), file.name);
-});
+}
 
 function showVideoPreview(url, filename) {
   const videoElement = document.getElementById('preview-video');
-  videoElement.src = url;
-  document.getElementById('video-filename').textContent = filename;
+  if (videoElement) {
+    videoElement.src = url;
+  }
+  
+  const filenameElement = document.getElementById('video-filename');
+  if (filenameElement) {
+    filenameElement.textContent = filename;
+  }
   
   // Hide source options, show preview
-  document.getElementById('video-source-options').style.display = 'none';
-  document.getElementById('recording-interface').style.display = 'none';
-  document.getElementById('video-preview-section').style.display = 'block';
+  const videoSourceOptions = document.getElementById('video-source-options');
+  const recordingInterface = document.getElementById('recording-interface');
+  const videoPreviewSection = document.getElementById('video-preview-section');
+  
+  if (videoSourceOptions) videoSourceOptions.style.display = 'none';
+  if (recordingInterface) recordingInterface.style.display = 'none';
+  if (videoPreviewSection) videoPreviewSection.style.display = 'block';
   
   editorState.videoElement = videoElement;
   
   // Update trim end based on duration
-  videoElement.addEventListener('loadedmetadata', () => {
-    const duration = videoElement.duration;
-    editorState.trimEnd = Math.min(duration, 30);
-    document.getElementById('trim-end').value = editorState.trimEnd.toFixed(1);
-    document.getElementById('trim-end').max = duration.toFixed(1);
-  });
+  if (videoElement) {
+    videoElement.addEventListener('loadedmetadata', () => {
+      const duration = videoElement.duration;
+      editorState.trimEnd = Math.min(duration, 30);
+      
+      const trimEndInput = document.getElementById('trim-end');
+      if (trimEndInput) {
+        trimEndInput.value = editorState.trimEnd.toFixed(1);
+        trimEndInput.max = duration.toFixed(1);
+      }
+    });
+  }
 }
 
-// Retake video
-document.getElementById('retake-video-btn').addEventListener('click', () => {
+function handleRetakeVideo() {
   editorState.videoFile = null;
   editorState.videoBlob = null;
-  document.getElementById('video-preview-section').style.display = 'none';
-  document.getElementById('video-source-options').style.display = 'grid';
-});
+  
+  const videoPreviewSection = document.getElementById('video-preview-section');
+  const videoSourceOptions = document.getElementById('video-source-options');
+  
+  if (videoPreviewSection) videoPreviewSection.style.display = 'none';
+  if (videoSourceOptions) videoSourceOptions.style.display = 'grid';
+}
 
-// Continue to music selection
-document.getElementById('continue-to-music-btn').addEventListener('click', () => {
+function handleContinueToMusic() {
   showSection('music-section');
   loadArtistSongs();
-});
+}
 
 // ============================================
 // STEP 2: ADD MUSIC
@@ -232,6 +401,8 @@ document.getElementById('continue-to-music-btn').addEventListener('click', () =>
 
 async function loadArtistSongs() {
   const listElement = document.getElementById('your-songs-list');
+  if (!listElement) return;
+  
   listElement.innerHTML = '<div class="loading">Loading your songs...</div>';
   
   try {
@@ -262,11 +433,13 @@ async function loadArtistSongs() {
     document.querySelectorAll('.btn-select-song').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const songItem = e.target.closest('.song-item');
-        selectSong(
-          songItem.dataset.songId,
-          songItem.querySelector('.song-title').textContent,
-          songItem.dataset.audioUrl
-        );
+        if (songItem) {
+          selectSong(
+            songItem.dataset.songId,
+            songItem.querySelector('.song-title').textContent,
+            songItem.dataset.audioUrl
+          );
+        }
       });
     });
     
@@ -278,7 +451,7 @@ async function loadArtistSongs() {
 
 function selectSong(songId, title, audioUrl) {
   editorState.selectedSongId = songId;
-  editorState.audioFile = null; // Clear uploaded audio
+  editorState.audioFile = null;
   
   // Load audio
   const audioElement = document.createElement('audio');
@@ -286,20 +459,23 @@ function selectSong(songId, title, audioUrl) {
   editorState.audioElement = audioElement;
   
   // Update UI
-  document.getElementById('music-name').textContent = `🎵 ${title}`;
-  document.getElementById('continue-to-edit-btn').disabled = false;
+  const musicNameElement = document.getElementById('music-name');
+  const continueBtn = document.getElementById('continue-to-edit-btn');
+  
+  if (musicNameElement) musicNameElement.textContent = `🎵 ${title}`;
+  if (continueBtn) continueBtn.disabled = false;
   
   // Highlight selected
   document.querySelectorAll('.song-item').forEach(item => {
     item.classList.remove('selected');
   });
-  document.querySelector(`[data-song-id="${songId}"]`)?.classList.add('selected');
+  const selectedItem = document.querySelector(`[data-song-id="${songId}"]`);
+  if (selectedItem) selectedItem.classList.add('selected');
   
   console.log('✅ Song selected:', title);
 }
 
-// Upload new audio
-document.getElementById('audio-upload').addEventListener('change', (e) => {
+function handleAudioUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
   
@@ -309,19 +485,27 @@ document.getElementById('audio-upload').addEventListener('change', (e) => {
   }
   
   editorState.audioFile = file;
-  editorState.selectedSongId = null; // Clear selected song
+  editorState.selectedSongId = null;
   
   // Show preview
   const audioElement = document.getElementById('audio-element');
-  audioElement.src = URL.createObjectURL(file);
-  document.getElementById('audio-filename').textContent = file.name;
-  document.getElementById('audio-preview').style.display = 'block';
+  const audioFilename = document.getElementById('audio-filename');
+  const audioPreview = document.getElementById('audio-preview');
   
-  editorState.audioElement = audioElement;
+  if (audioElement) {
+    audioElement.src = URL.createObjectURL(file);
+    editorState.audioElement = audioElement;
+  }
+  
+  if (audioFilename) audioFilename.textContent = file.name;
+  if (audioPreview) audioPreview.style.display = 'block';
   
   // Update UI
-  document.getElementById('music-name').textContent = `📁 ${file.name}`;
-  document.getElementById('continue-to-edit-btn').disabled = false;
+  const musicNameElement = document.getElementById('music-name');
+  const continueBtn = document.getElementById('continue-to-edit-btn');
+  
+  if (musicNameElement) musicNameElement.textContent = `📁 ${file.name}`;
+  if (continueBtn) continueBtn.disabled = false;
   
   // Clear song selection
   document.querySelectorAll('.song-item').forEach(item => {
@@ -329,36 +513,28 @@ document.getElementById('audio-upload').addEventListener('change', (e) => {
   });
   
   console.log('✅ Audio uploaded:', file.name);
-});
+}
 
-// No music option
-document.getElementById('no-music-btn').addEventListener('click', () => {
+function handleNoMusic() {
   editorState.selectedSongId = null;
   editorState.audioFile = null;
   editorState.audioElement = null;
   
-  document.getElementById('music-name').textContent = '🔇 Original audio';
-  document.getElementById('continue-to-edit-btn').disabled = false;
+  const musicNameElement = document.getElementById('music-name');
+  const continueBtn = document.getElementById('continue-to-edit-btn');
+  const audioPreview = document.getElementById('audio-preview');
+  
+  if (musicNameElement) musicNameElement.textContent = '🔇 Original audio';
+  if (continueBtn) continueBtn.disabled = false;
+  if (audioPreview) audioPreview.style.display = 'none';
   
   // Clear selections
   document.querySelectorAll('.song-item').forEach(item => {
     item.classList.remove('selected');
   });
-  document.getElementById('audio-preview').style.display = 'none';
   
   console.log('✅ Using original audio');
-});
-
-// Navigation
-document.getElementById('back-to-video-btn').addEventListener('click', () => {
-  showSection('video-source-section');
-  document.getElementById('video-preview-section').style.display = 'block';
-});
-
-document.getElementById('continue-to-edit-btn').addEventListener('click', () => {
-  initializeEditor();
-  showSection('edit-section');
-});
+}
 
 // ============================================
 // STEP 3: EDIT VIDEO
@@ -366,8 +542,11 @@ document.getElementById('continue-to-edit-btn').addEventListener('click', () => 
 
 function initializeEditor() {
   const canvas = document.getElementById('preview-canvas');
-  const ctx = canvas.getContext('2d');
   const video = editorState.videoElement;
+  
+  if (!canvas || !video) return;
+  
+  const ctx = canvas.getContext('2d');
 
   // Set canvas size to match video
   video.addEventListener('loadedmetadata', () => {
@@ -394,22 +573,30 @@ function initializeEditor() {
   video.addEventListener('timeupdate', () => {
     const current = video.currentTime;
     const duration = video.duration;
-    document.getElementById('current-time').textContent = formatTime(current);
-    document.getElementById('total-time').textContent = formatTime(duration);
-    document.getElementById('video-scrubber').value = (current / duration) * 100;
+    
+    const currentTimeEl = document.getElementById('current-time');
+    const totalTimeEl = document.getElementById('total-time');
+    const scrubber = document.getElementById('video-scrubber');
+    
+    if (currentTimeEl) currentTimeEl.textContent = formatTime(current);
+    if (totalTimeEl) totalTimeEl.textContent = formatTime(duration);
+    if (scrubber) scrubber.value = (current / duration) * 100;
   });
   
   // Update trim status
   const duration = video.duration;
   const trimmed = editorState.trimEnd - editorState.trimStart;
-  document.getElementById('trim-status').textContent = 
-    `Video: ${formatTime(duration)} | Trimmed to: ${formatTime(trimmed)}`;
+  const trimStatus = document.getElementById('trim-status');
+  if (trimStatus) {
+    trimStatus.textContent = `Video: ${formatTime(duration)} | Trimmed to: ${formatTime(trimmed)}`;
+  }
 }
 
-// Play/pause control
-document.getElementById('play-pause-btn').addEventListener('click', () => {
+function handlePlayPause() {
   const video = editorState.videoElement;
   const btn = document.getElementById('play-pause-btn');
+  
+  if (!video || !btn) return;
   
   if (video.paused) {
     video.play();
@@ -418,20 +605,25 @@ document.getElementById('play-pause-btn').addEventListener('click', () => {
     video.pause();
     btn.textContent = '▶️';
   }
-});
+}
 
-// Video scrubber
-document.getElementById('video-scrubber').addEventListener('input', (e) => {
+function handleScrubber(e) {
   const video = editorState.videoElement;
+  if (!video) return;
+  
   const percent = e.target.value / 100;
   video.currentTime = video.duration * percent;
-});
+}
 
-// Trim controls
-document.getElementById('apply-trim-btn').addEventListener('click', () => {
-  const start = parseFloat(document.getElementById('trim-start').value);
-  const end = parseFloat(document.getElementById('trim-end').value);
+function handleApplyTrim() {
+  const trimStartInput = document.getElementById('trim-start');
+  const trimEndInput = document.getElementById('trim-end');
   const video = editorState.videoElement;
+  
+  if (!trimStartInput || !trimEndInput || !video) return;
+  
+  const start = parseFloat(trimStartInput.value);
+  const end = parseFloat(trimEndInput.value);
 
   if (start < 0 || end > video.duration || start >= end) {
     alert('Invalid trim values');
@@ -450,23 +642,31 @@ document.getElementById('apply-trim-btn').addEventListener('click', () => {
   video.currentTime = start;
   
   // Update status
-  document.getElementById('trim-status').textContent = 
-    `Video trimmed to: ${formatTime(end - start)} (${formatTime(start)} - ${formatTime(end)})`;
+  const trimStatus = document.getElementById('trim-status');
+  if (trimStatus) {
+    trimStatus.textContent = `Video trimmed to: ${formatTime(end - start)} (${formatTime(start)} - ${formatTime(end)})`;
+  }
   
   console.log(`✂️ Video trimmed: ${start}s - ${end}s`);
-});
+}
 
-// Text overlay (same as before)
-document.getElementById('add-text-btn').addEventListener('click', () => {
-  const text = document.getElementById('text-input').value.trim();
+function handleAddText() {
+  const textInput = document.getElementById('text-input');
+  if (!textInput) return;
+  
+  const text = textInput.value.trim();
   if (!text) return;
+
+  const textColorInput = document.getElementById('text-color');
+  const textFontSelect = document.getElementById('text-font');
+  const textSizeInput = document.getElementById('text-size');
 
   const textOverlay = {
     id: Date.now(),
     text: text,
-    color: document.getElementById('text-color').value,
-    font: document.getElementById('text-font').value,
-    size: parseInt(document.getElementById('text-size').value),
+    color: textColorInput ? textColorInput.value : '#ffffff',
+    font: textFontSelect ? textFontSelect.value : 'Arial',
+    size: textSizeInput ? parseInt(textSizeInput.value) : 48,
     x: 50,
     y: 50
   };
@@ -475,11 +675,12 @@ document.getElementById('add-text-btn').addEventListener('click', () => {
   renderTextOverlay(textOverlay);
   updateTextList();
   
-  document.getElementById('text-input').value = '';
-});
+  textInput.value = '';
+}
 
 function renderTextOverlay(overlay) {
   const container = document.getElementById('text-overlay-container');
+  if (!container) return;
   
   const textElement = document.createElement('div');
   textElement.className = 'text-overlay-item';
@@ -541,6 +742,8 @@ function renderTextOverlay(overlay) {
 
 function updateTextList() {
   const list = document.getElementById('text-list');
+  if (!list) return;
+  
   list.innerHTML = '';
   
   editorState.textOverlays.forEach(overlay => {
@@ -556,56 +759,27 @@ function updateTextList() {
 
 window.removeTextOverlay = function(id) {
   editorState.textOverlays = editorState.textOverlays.filter(o => o.id !== id);
-  document.getElementById(`text-${id}`)?.remove();
+  const textElement = document.getElementById(`text-${id}`);
+  if (textElement) textElement.remove();
   updateTextList();
 };
-
-// Change music
-document.getElementById('change-music-btn').addEventListener('click', () => {
-  showSection('music-section');
-});
-
-document.getElementById('back-to-music-btn').addEventListener('click', () => {
-  showSection('music-section');
-});
 
 // ============================================
 // STEP 4: SAVE VIDEO
 // ============================================
 
-document.getElementById('save-video-btn').addEventListener('click', async () => {
+async function handleSaveVideo() {
   if (!confirm('Save this video and return to Turntbl?')) return;
 
   showSection('saving-section');
-  document.getElementById('save-status').textContent = 'Preparing video...';
+  
+  const saveStatus = document.getElementById('save-status');
+  if (saveStatus) saveStatus.textContent = 'Preparing video...';
 
   try {
-    // For MVP: Just save the original video file
-    // In Phase 2, we'll implement actual trimming and text burning
-    
     let finalVideo = editorState.videoFile;
     
-    // Prepare form data with just the video
-    const formData = new FormData();
-    formData.append('video', finalVideo);
-    formData.append('artist_id', artistId);
-    
-    // Add audio if selected/uploaded
-    if (editorState.audioFile) {
-      formData.append('audio', editorState.audioFile);
-    } else if (editorState.selectedSongId) {
-      formData.append('song_id', editorState.selectedSongId);
-    }
-    
-    // Add metadata about edits (for future processing)
-    formData.append('trim_start', editorState.trimStart.toString());
-    formData.append('trim_end', editorState.trimEnd.toString());
-    formData.append('text_overlays', JSON.stringify(editorState.textOverlays));
-    
-    document.getElementById('save-status').textContent = 'Uploading to Turntbl...';
-    
-    // For now, just store the video and redirect back
-    // getturntbl.com will handle adding title, cover art, and publishing
+    if (saveStatus) saveStatus.textContent = 'Uploading to Turntbl...';
     
     // Upload video to Supabase storage directly
     const videoFileName = `${artistId}/${Date.now()}_promo.mp4`;
@@ -626,7 +800,7 @@ document.getElementById('save-video-btn').addEventListener('click', async () => 
       encodeURIComponent(URL.createObjectURL(editorState.audioFile)) : '';
     const songId = editorState.selectedSongId || '';
     
-    document.getElementById('save-status').textContent = 'Success! Redirecting...';
+    if (saveStatus) saveStatus.textContent = 'Success! Redirecting...';
     
     setTimeout(() => {
       window.location.href = `${returnUrl}?video_url=${videoUrl}&song_id=${songId}&from_studio=true`;
@@ -637,7 +811,7 @@ document.getElementById('save-video-btn').addEventListener('click', async () => 
     alert(`Failed to save: ${error.message}`);
     showSection('edit-section');
   }
-});
+}
 
 // Helper functions
 function formatTime(seconds) {
@@ -646,10 +820,9 @@ function formatTime(seconds) {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-// Cancel button
-document.getElementById('cancel-btn').addEventListener('click', () => {
+function handleCancel() {
   if (confirm('Are you sure? All changes will be lost.')) {
     stopCamera();
     window.location.href = returnUrl;
   }
-});
+}
