@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Your Music Video - Turntbl Studio</title>
+  <link rel="stylesheet" href="css/editor.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="editor-header">
+    <div class="logo">Turntbl Studio</div>
+    <button id="cancel-btn" class="btn-secondary">Cancel</button>
+  </header>
+
+  <!-- Main Editor -->
+  <main class="editor-container">
+    
+    <!-- Step 1: Upload Files -->
+    <section id="upload-section" class="editor-section active">
+      <h2>Upload Your Content</h2>
+      
+      <div class="upload-grid">
+        <!-- Video Upload -->
+        <div class="upload-box">
+          <label for="video-upload" class="upload-label">
+            <div class="upload-icon">🎥</div>
+            <p><strong>Upload Video</strong></p>
+            <p class="upload-hint">30 seconds max, MP4/MOV</p>
+            <input type="file" id="video-upload" accept="video/*" hidden>
+          </label>
+          <div id="video-preview" class="file-preview" style="display: none;">
+            <video id="video-element" controls></video>
+            <p id="video-filename"></p>
+          </div>
+        </div>
+
+        <!-- Audio Upload -->
+        <div class="upload-box">
+          <label for="audio-upload" class="upload-label">
+            <div class="upload-icon">🎵</div>
+            <p><strong>Upload Song (Full Version)</strong></p>
+            <p class="upload-hint">MP3, WAV, M4A</p>
+            <input type="file" id="audio-upload" accept="audio/*" hidden>
+          </label>
+          <div id="audio-preview" class="file-preview" style="display: none;">
+            <audio id="audio-element" controls></audio>
+            <p id="audio-filename"></p>
+          </div>
+        </div>
+
+        <!-- Cover Art Upload -->
+        <div class="upload-box">
+          <label for="cover-upload" class="upload-label">
+            <div class="upload-icon">🖼️</div>
+            <p><strong>Upload Cover Art</strong></p>
+            <p class="upload-hint">Square image, JPG/PNG</p>
+            <input type="file" id="cover-upload" accept="image/*" hidden>
+          </label>
+          <div id="cover-preview" class="file-preview" style="display: none;">
+            <img id="cover-element" alt="Cover art">
+            <p id="cover-filename"></p>
+          </div>
+        </div>
+      </div>
+
+      <button id="continue-metadata-btn" class="btn-primary" disabled>
+        Continue →
+      </button>
+    </section>
+
+    <!-- Step 2: Add Metadata -->
+    <section id="metadata-section" class="editor-section">
+      <h2>Song Details</h2>
+      
+      <form id="metadata-form">
+        <div class="form-group">
+          <label for="song-title">Song Title *</label>
+          <input type="text" id="song-title" required placeholder="Enter song title">
+        </div>
+
+        <div class="form-group">
+          <label for="album">Album (Optional)</label>
+          <input type="text" id="album" placeholder="Enter album name">
+        </div>
+
+        <div class="form-group">
+          <label for="genre">Genre</label>
+          <select id="genre">
+            <option value="">Select genre...</option>
+            <option value="Pop">Pop</option>
+            <option value="Rock">Rock</option>
+            <option value="Hip-Hop">Hip-Hop</option>
+            <option value="R&B">R&B</option>
+            <option value="Electronic">Electronic</option>
+            <option value="Country">Country</option>
+            <option value="Jazz">Jazz</option>
+            <option value="Classical">Classical</option>
+            <option value="Indie">Indie</option>
+            <option value="Alternative">Alternative</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="button-group">
+          <button type="button" id="back-to-upload-btn" class="btn-secondary">
+            ← Back
+          </button>
+          <button type="button" id="continue-edit-btn" class="btn-primary">
+            Continue to Editor →
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Step 3: Edit Video -->
+    <section id="edit-section" class="editor-section">
+      <h2>Edit Your Video</h2>
+      
+      <div class="edit-workspace">
+        <!-- Video Preview -->
+        <div class="video-preview-container">
+          <div class="canvas-container">
+            <canvas id="preview-canvas"></canvas>
+            <div id="text-overlay-container" class="text-overlay-container"></div>
+          </div>
+          <div class="video-controls">
+            <button id="play-pause-btn">▶️ Play</button>
+            <input type="range" id="video-scrubber" min="0" max="100" value="0">
+            <span id="current-time">0:00</span> / <span id="total-time">0:00</span>
+          </div>
+        </div>
+
+        <!-- Editing Tools -->
+        <div class="editing-tools">
+          
+          <!-- Trim Tool -->
+          <div class="tool-section">
+            <h3>✂️ Trim Video (Max 30s)</h3>
+            <div class="trim-controls">
+              <label>
+                Start: <input type="number" id="trim-start" min="0" value="0" step="0.1"> seconds
+              </label>
+              <label>
+                End: <input type="number" id="trim-end" min="0" value="30" step="0.1"> seconds
+              </label>
+              <button id="apply-trim-btn" class="btn-tool">Apply Trim</button>
+            </div>
+          </div>
+
+          <!-- Text Overlay -->
+          <div class="tool-section">
+            <h3>📝 Add Text</h3>
+            <div class="text-controls">
+              <input type="text" id="text-input" placeholder="Enter text...">
+              <div class="text-style-grid">
+                <input type="color" id="text-color" value="#ffffff">
+                <select id="text-font">
+                  <option value="Arial">Arial</option>
+                  <option value="Impact">Impact</option>
+                  <option value="Georgia">Georgia</option>
+                  <option value="Courier New">Courier</option>
+                </select>
+                <input type="number" id="text-size" min="20" max="100" value="48" placeholder="Size">
+              </div>
+              <button id="add-text-btn" class="btn-tool">Add Text to Video</button>
+            </div>
+            <div id="text-list" class="text-list"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button id="back-to-metadata-btn" class="btn-secondary">← Back</button>
+        <button id="publish-btn" class="btn-primary btn-large">
+          🚀 Publish to Turntbl
+        </button>
+      </div>
+    </section>
+
+    <!-- Publishing Progress -->
+    <section id="publishing-section" class="editor-section" style="display: none;">
+      <div class="publishing-status">
+        <div class="spinner-large"></div>
+        <h2>Publishing Your Song...</h2>
+        <p id="publish-status">Uploading files...</p>
+        <div class="progress-bar">
+          <div id="progress-fill" class="progress-fill"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script type="module" src="js/editor.js"></script>
+</body>
+</html>
