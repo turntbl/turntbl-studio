@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Finalize - Turntbl Studio</title>
+  <link rel="stylesheet" href="css/editor.css">
+</head>
+<body>
+  
+  <!-- Finalize View -->
+  <section id="finalize-view" class="view active">
+    <!-- Top Bar -->
+    <div class="top-bar">
+      <button id="back-to-edit-btn" class="icon-btn">←</button>
+      <span class="view-title">Finalize</span>
+    </div>
+
+    <!-- Video Preview with Thumbnail Frame -->
+    <div class="finalize-preview-section">
+      <div class="thumbnail-selector">
+        <canvas id="thumbnail-canvas"></canvas>
+        <p class="thumbnail-instruction">Drag slider to choose thumbnail</p>
+      </div>
+    </div>
+
+    <!-- Thumbnail Scrubber -->
+    <div class="thumbnail-scrubber-section">
+      <input type="range" id="thumbnail-scrubber" class="scrubber" min="0" max="100" value="0">
+      <div class="scrubber-thumbnails" id="scrubber-thumbnails"></div>
+    </div>
+
+    <!-- Caption Input -->
+    <div class="caption-section">
+      <label for="caption-input">Caption (optional)</label>
+      <textarea 
+        id="caption-input" 
+        class="caption-input" 
+        placeholder="Write something about your song..."
+        maxlength="150"
+      ></textarea>
+      <div class="caption-counter">
+        <span id="caption-count">0</span>/150
+      </div>
+    </div>
+
+    <!-- Selected Thumbnail Preview -->
+    <div class="selected-thumbnail-section">
+      <p class="section-label">Selected Thumbnail</p>
+      <div class="selected-thumbnail-preview">
+        <canvas id="selected-thumbnail-canvas"></canvas>
+      </div>
+    </div>
+
+    <!-- Publish Button -->
+    <div class="finalize-actions">
+      <button id="publish-btn" class="btn-publish">
+        Publish to Turntbl
+      </button>
+    </div>
+  </section>
+
+  <!-- Publishing Progress -->
+  <section id="publishing-view" class="view">
+    <div class="saving-container">
+      <div class="spinner-large"></div>
+      <h2>Publishing Your Video...</h2>
+      <p id="publish-status">Uploading...</p>
+      <div class="progress-bar">
+        <div id="publish-progress" class="progress-fill"></div>
+      </div>
+    </div>
+  </section>
+
+  <script type="module" src="js/finalize.js"></script>
+</body>
+</html>
