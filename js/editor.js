@@ -272,6 +272,7 @@ async function startCountdown() {
 
 function startRecording() {
   currentState = AppState.RECORDING;
+  document.body.classList.add('is-recording');
   editorState.recordedChunks = [];
   
   // Setup MediaRecorder
@@ -329,14 +330,15 @@ function startRecording() {
 }
 
 function stopRecording() {
-  if (editorState.mediaRecorder && editorState.mediaRecorder.state === 'recording') {
-    editorState.mediaRecorder.stop();
-    
     // Clear timer
     if (editorState.recordingTimerInterval) {
       clearInterval(editorState.recordingTimerInterval);
       editorState.recordingTimerInterval = null;
     }
+  
+    if (editorState.mediaRecorder && editorState.mediaRecorder.state === 'recording') {
+    editorState.mediaRecorder.stop();
+    document.body.classList.remove('is-recording');
     
     // Hide recording indicator
     const indicator = document.getElementById('recording-indicator');
