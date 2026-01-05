@@ -1139,3 +1139,14 @@ body {
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* Recording State - Hide unnecessary controls */
+body.is-recording .tool-icons,
+body.is-recording .flip-btn {
+  display: none;
+}
+
+body.is-recording .record-btn {
+  /* Keep record button visible but as stop button */
+  opacity: 1;
+}
