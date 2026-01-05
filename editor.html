@@ -115,14 +115,18 @@
       
       <div class="video-timeline-container">
         <div id="video-thumbnails" class="video-thumbnails"></div>
-        <div class="timeline-overlay">
-          <div id="trim-selection" class="trim-selection">
-            <div id="trim-handle-left" class="trim-handle left">
-              <div class="handle-line"></div>
-            </div>
-            <div id="trim-handle-right" class="trim-handle right">
-              <div class="handle-line"></div>
-            </div>
+        
+        <!-- Dark overlays on TRIMMED parts -->
+        <div id="trim-overlay-left" class="trim-overlay left"></div>
+        <div id="trim-overlay-right" class="trim-overlay right"></div>
+        
+        <!-- Selection borders -->
+        <div id="trim-selection" class="trim-selection">
+          <div id="trim-handle-left" class="trim-handle left">
+            <div class="handle-line"></div>
+          </div>
+          <div id="trim-handle-right" class="trim-handle right">
+            <div class="handle-line"></div>
           </div>
         </div>
       </div>
