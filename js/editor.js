@@ -637,6 +637,8 @@ function makeTrimHandleDraggable(handle, side, container, video, duration) {
 
 function updateTrimDisplay() {
   const selection = document.getElementById('trim-selection');
+  const leftOverlay = document.getElementById('trim-overlay-left');
+  const rightOverlay = document.getElementById('trim-overlay-right');
   const duration = editorState.videoElement?.duration || 30;
   
   if (selection) {
@@ -645,6 +647,14 @@ function updateTrimDisplay() {
     
     selection.style.left = startPercent + '%';
     selection.style.width = (endPercent - startPercent) + '%';
+    
+    // Update dark overlays
+    if (leftOverlay) {
+      leftOverlay.style.width = startPercent + '%';
+    }
+    if (rightOverlay) {
+      rightOverlay.style.width = (100 - endPercent) + '%';
+    }
   }
   
   const trimDuration = document.getElementById('trim-duration');
