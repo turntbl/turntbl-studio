@@ -97,151 +97,114 @@
     <!-- Top Bar -->
     <div class="top-bar">
       <button id="edit-cancel-btn" class="icon-btn">✕</button>
-      <span id="edit-duration" class="duration-display">0:00</span>
-      <button id="next-btn" class="next-btn">Next</button>
+      <span class="view-title">Edit Video</span>
     </div>
-
-    <!-- Video Preview with Text Overlays -->
-    <div class="video-container">
-      <canvas id="video-canvas"></canvas>
-      <div id="text-overlay-container" class="text-overlay-container"></div>
-      <video id="edit-video" playsinline loop style="display: none;"></video>
+  
+    <!-- Video Preview -->
+    <div class="video-preview-section">
+      <video id="edit-video" playsinline loop muted></video>
+      <audio id="preview-audio" loop style="display: none;"></audio>
     </div>
-
-    <!-- Video Controls -->
-    <div class="video-controls">
-      <button id="play-pause-btn" class="control-btn">▶️</button>
-      <input type="range" id="edit-scrubber" class="scrubber" min="0" max="100" value="0">
-      <span id="edit-time">0:00 / 0:00</span>
-    </div>
-
-    <!-- Tool Tabs -->
-    <div class="tool-tabs">
-      <button class="tool-tab" data-tool="music">
-        <span class="tab-icon">🎵</span>
-        <span class="tab-label">Sounds</span>
-      </button>
-      <button class="tool-tab" data-tool="text">
-        <span class="tab-icon">💬</span>
-        <span class="tab-label">Text</span>
-      </button>
-      <button class="tool-tab" data-tool="trim">
-        <span class="tab-icon">✂️</span>
-        <span class="tab-label">Trim</span>
-      </button>
-    </div>
-
-    <!-- Tool Drawers -->
-    <div id="tool-drawer" class="tool-drawer">
+  
+    <!-- Video Timeline with Thumbnails -->
+    <div class="timeline-section">
+      <div class="timeline-label">
+        <span id="trim-duration">0:00</span>
+        <span class="timeline-instruction">Drag to trim (max 30s)</span>
+      </div>
       
-      <!-- Music Drawer -->
-      <div id="music-drawer" class="drawer-content">
-        <div class="drawer-header">
-          <h3>🎵 Add Sound</h3>
-          <button class="close-drawer-btn">✕</button>
-        </div>
-        
-        <div class="drawer-body">
-          <!-- Your Songs -->
-          <div class="music-section">
-            <h4>Your Songs</h4>
-            <div id="your-songs-list" class="songs-list">
-              <div class="loading">Loading...</div>
+      <div class="video-timeline-container">
+        <div id="video-thumbnails" class="video-thumbnails"></div>
+        <div class="timeline-overlay">
+          <div id="trim-selection" class="trim-selection">
+            <div id="trim-handle-left" class="trim-handle left">
+              <div class="handle-line"></div>
             </div>
-          </div>
-
-          <!-- Upload New Audio -->
-          <div class="music-section">
-            <h4>Upload New Audio</h4>
-            <label for="audio-upload-input" class="upload-audio-btn">
-              Choose Audio File
-            </label>
-            <input type="file" id="audio-upload-input" accept="audio/*" hidden>
-            <div id="audio-preview" class="audio-preview" style="display: none;">
-              <audio id="audio-element" controls></audio>
-              <p id="audio-filename"></p>
+            <div id="trim-handle-right" class="trim-handle right">
+              <div class="handle-line"></div>
             </div>
-          </div>
-
-          <!-- Original Audio -->
-          <div class="music-section">
-            <h4>Original Audio</h4>
-            <button id="original-audio-btn" class="option-btn">
-              🔇 Use Original Audio
-            </button>
           </div>
         </div>
       </div>
-
-      <!-- Text Drawer -->
-      <div id="text-drawer" class="drawer-content">
-        <div class="drawer-header">
-          <h3>💬 Add Text</h3>
-          <button class="close-drawer-btn">✕</button>
+      
+      <div class="timeline-times">
+        <span id="timeline-start">0:00</span>
+        <span id="timeline-end">0:00</span>
+      </div>
+    </div>
+  
+    <!-- Music Card -->
+    <div class="music-card-section">
+      <button id="music-card" class="music-card">
+        <div class="music-card-content">
+          <div id="music-icon" class="music-icon">🎵</div>
+          <div id="music-info" class="music-info">
+            <p class="music-title">Add Sound</p>
+            <p class="music-artist">Choose from your songs</p>
+          </div>
+        </div>
+        <div class="music-arrow">›</div>
+      </button>
+  
+      <!-- Song Timeline (hidden until song selected) -->
+      <div id="song-timeline-section" class="song-timeline-section" style="display: none;">
+        <div class="timeline-label">
+          <span class="timeline-instruction">Select which part of the song to use</span>
         </div>
         
-        <div class="drawer-body">
-          <input type="text" id="text-input" class="text-input" placeholder="Type text here..." maxlength="100">
-          
-          <div class="text-controls">
-            <div class="control-group">
-              <label>Font</label>
-              <select id="text-font" class="text-select">
-                <option value="Arial">Arial</option>
-                <option value="Impact">Impact</option>
-                <option value="Georgia">Georgia</option>
-                <option value="Courier New">Courier</option>
-                <option value="Comic Sans MS">Comic Sans</option>
-              </select>
-            </div>
-            
-            <div class="control-group">
-              <label>Size</label>
-              <input type="number" id="text-size" class="text-number" min="20" max="100" value="48">
-            </div>
-            
-            <div class="control-group">
-              <label>Color</label>
-              <input type="color" id="text-color" class="text-color" value="#ffffff">
+        <div class="song-timeline-container">
+          <div id="song-waveform" class="song-waveform"></div>
+          <div class="song-timeline-overlay">
+            <div id="song-selection" class="song-selection">
+              <div id="song-handle-left" class="song-handle left">
+                <div class="handle-line"></div>
+              </div>
+              <div id="song-handle-right" class="song-handle right">
+                <div class="handle-line"></div>
+              </div>
             </div>
           </div>
-
-          <button id="add-text-btn" class="action-btn primary">Add Text</button>
-
-          <div id="text-list" class="text-list"></div>
-        </div>
-      </div>
-
-      <!-- Trim Drawer -->
-      <div id="trim-drawer" class="drawer-content">
-        <div class="drawer-header">
-          <h3>✂️ Trim Video</h3>
-          <button class="close-drawer-btn">✕</button>
         </div>
         
-        <div class="drawer-body">
-          <p class="trim-info">Maximum 30 seconds</p>
-          
-          <div class="trim-controls">
-            <div class="control-group">
-              <label>Start</label>
-              <input type="number" id="trim-start" class="trim-input" min="0" step="0.1" value="0">
-              <span class="unit">sec</span>
-            </div>
-            
-            <div class="control-group">
-              <label>End</label>
-              <input type="number" id="trim-end" class="trim-input" min="0" step="0.1" value="30">
-              <span class="unit">sec</span>
-            </div>
-          </div>
-
-          <button id="apply-trim-btn" class="action-btn primary">Apply Trim</button>
-          
-          <div id="trim-status" class="trim-status"></div>
+        <div class="timeline-times">
+          <span id="song-start-time">0:00</span>
+          <span id="song-duration">0:00 selected</span>
+          <span id="song-end-time">0:00</span>
         </div>
       </div>
-
+    </div>
+  
+    <!-- Next Button -->
+    <div class="edit-actions">
+      <button id="next-to-finalize-btn" class="btn-next">
+        Next
+      </button>
+    </div>
+  
+    <!-- Music Drawer -->
+    <div id="music-drawer" class="music-drawer">
+      <div class="drawer-header">
+        <h3>Add Sound</h3>
+        <button id="close-music-drawer" class="icon-btn">✕</button>
+      </div>
+      
+      <div class="drawer-body">
+        <!-- Your Songs -->
+        <div class="music-section">
+          <h4>Your Songs</h4>
+          <div id="your-songs-list" class="songs-list">
+            <div class="loading">Loading...</div>
+          </div>
+        </div>
+  
+        <!-- Original Audio -->
+        <div class="music-section">
+          <h4>Original Audio</h4>
+          <button id="use-original-audio" class="option-btn">
+            🔇 Use Video's Original Audio
+          </button>
+        </div>
+      </div>
     </div>
   </section>
 
